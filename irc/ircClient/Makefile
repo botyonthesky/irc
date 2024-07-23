@@ -6,11 +6,11 @@
 #    By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/07/17 17:22:21 by botyonthesk       #+#    #+#              #
-#    Updated: 2024/07/23 16:51:56 by botyonthesk      ###   ########.fr        #
+#    Updated: 2024/07/23 17:33:36 by botyonthesk      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME 			:= clientIrc
+NAME 			:= ircClient
 
 CXX				:= g++
 CXXFLAGS 		:= -std=c++98 -g -Wall -Wextra -Werror
