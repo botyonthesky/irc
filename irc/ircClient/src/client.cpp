@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 17:21:53 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/23 17:29:54 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/23 17:57:53 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,19 +46,39 @@ void    client::connectServer()
     std::cout << "Connected to localhost, PORT : " << PORT << std::endl;
 }
 
+void   client::handleMessage(void)
+{
+    try
+    {
+        if (_msg == "exit")
+            exitSocket();
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;   
+    }
+}
+
 void    client::sendMessage()
 {
-    std::cout << "$> : ";
-    std::cin >> _msg;
-    std::cout << "We send the message : " << _msg << std::endl;
-    _msgLen = _msg.size();
-    _bytesSent = send(_socketFd, _msg.c_str(), _msgLen, 0);
-    if (_bytesSent == -1)
-        sendError();
-    else if (_bytesSent == _msgLen)
-        std::cout << "Full message send : " << _msg << std::endl;
-    else
-        std::cout << "Partial message send, only : " << _bytesSent << "bytes sent" << std::endl;
+    try
+    {
+        std::cout << "$> : ";
+        std::cin >> _msg;
+        std::cout << "We send the message : " << _msg << std::endl;
+        _msgLen = _msg.size();
+        _bytesSent = send(_socketFd, _msg.c_str(), _msgLen, 0);
+        if (_bytesSent == -1)
+            sendError();
+        else if (_bytesSent == _msgLen)
+            std::cout << "Full message send : " << _msg << std::endl;
+        else
+            std::cout << "Partial message send, only : " << _bytesSent << "bytes sent" << std::endl;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
 }
 
 void    client::receivedMessage()
@@ -103,6 +123,10 @@ void    client::setMessage(std::string msg)
     _msg = msg;
 }
 
+const char* client::exitSocket::what() const throw()
+{
+    return ("We are closing socket");
+}
 const char* client::socketFdError::what() const throw()
 {
     return ("Error on socket fd");

@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 17:21:24 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/17 17:54:26 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/23 17:49:56 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,7 @@ class client
         void    connectServer(void);
         void    sendMessage(void);
         void    receivedMessage(void);
+        void    handleMessage(void);
 
         class socketFdError : public std::exception
         {
@@ -67,6 +68,11 @@ class client
         };
         
         class connectError : public std::exception
+        {
+            virtual const char* what() const throw();
+        };
+
+        class exitSocket : public std::exception
         {
             virtual const char* what() const throw();
         };

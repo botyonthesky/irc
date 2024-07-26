@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/23 17:20:25 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/26 11:25:58 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,7 @@ class server
         void    initServer(void);
         void    initSocket(void);
         void    initBind(void);
+        void    initListen(void);
         void    readingClient(void);
         void    handleClient(int clientFd);
         

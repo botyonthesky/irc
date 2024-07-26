@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:38:47 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/23 17:21:19 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/26 11:20:47y botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,9 +59,10 @@ void    server::initServer()
 
 void    server::initSocket()
 {
+    
     _socketFd = socket(_sa.sin_family, SOCK_STREAM, 0);
     if (_socketFd == -1)
-        socketFdError();
+        throw socketFdError();
     std::cout << "Creation of server socket fd : " << _socketFd << std::endl;
 }
 
@@ -70,7 +71,17 @@ void    server::initBind()
     _status = bind(_socketFd, (struct sockaddr *)&_sa, sizeof(_sa));
     std::cout << "Status of bind : " << _status << std::endl;
     if (_status != 0)
-        bindError();
+        throw bindError();
+}
+void    server::initListen()
+{
+    std::cout << "Listen on port : " << PORT << std::endl;
+    _status = listen(_socketFd, 20);
+    
+    std::cout << "Status of listen : " << _status << std::endl;
+        
+    if (_status != 0)
+        throw listenError();
 }
 
 void    server::readingClient()
@@ -81,13 +92,12 @@ void    server::readingClient()
     {
         std::cout << "We are gonna to read on client socket" << std::endl;
         _bytesRead = recv(_clientFd, buff, BUFSIZ, 0);
-        if (_bytesRead == 0)
-        {
-            std::cout << "Client socket : " << _clientFd << " closed" << std::endl;
-            break;
-        }
-        else if (_bytesRead == -1)    
-            recvError();
+        // if (_bytesRead == 0)
+        // {
+        //     std::cout << "Client socket : " << _clientFd << " closed" << std::endl;
+        //     break;
+        if (_bytesRead == -1)    
+            throw recvError();
         else
         {
             std::string message = "Got ya !";
@@ -98,7 +108,7 @@ void    server::readingClient()
             << " -> " << buff << std::endl;
             bytesSend = send(_clientFd, message.c_str(), msgSize, 0);
             if (bytesSend == -1)
-                sendError();
+                throw sendError();
             else if (bytesSend == msgSize)
             {
             std::cout << "Full message received by client socket : " << _clientFd
@@ -115,6 +125,8 @@ void    server::readingClient()
     close(_clientFd);
 }
 
+
+
 void    server::run()
 {
     try
@@ -122,21 +134,15 @@ void    server::run()
         initServer();
         initSocket();
         initBind();
-        
+
         std::cout << "Connection socket to localhost, PORT : " << PORT << std::endl;
         std::cout << std::endl;
+
+        initListen();
         
-        std::cout << "Listen on port : " << PORT << std::endl;
-        _status = listen(_socketFd, 20);
-        
-        std::cout << "Status of listen : " << _status << std::endl;
-        if (_status != 0)
-            listenError();
-         
         _addrSize = sizeof(_clienAddr);
         
         std::cout << "Address size : " << _addrSize << std::endl;
-
         std::cout << "Waiting for client connection" << std::endl;
         
         while (true) 
@@ -144,7 +150,7 @@ void    server::run()
             _clientFd = accept(_socketFd, (struct sockaddr *)&_clienAddr, &_addrSize);
             std::cout << "Accept, client fd : " << _clientFd << std::endl;
             if (_clientFd == -1)
-                clientFdError();
+                throw clientFdError();
             std::cout << "Accept new connection on client fd : " << _clientFd << std::endl;
             handleClient(_clientFd);
         }
