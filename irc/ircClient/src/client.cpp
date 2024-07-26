@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 17:21:53 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/26 15:55:27 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/26 17:50:12 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,8 +59,9 @@ void    client::sendMessage()
     try
     {
         std::cout << "$> : ";
-        std::cin >> _msg;
-        // std::cout << "We send the message : " << _msg << std::endl;
+        // std::cin >> _msg;
+        std::getline(std::cin, _msg);
+        std::cout << _msg << std::endl;
         _msgLen = _msg.size();
         _bytesSent = send(_socketFd, _msg.c_str(), _msgLen, 0);
         if (_bytesSent == -1)

@@ -86,25 +86,36 @@ void    server::initListen()
 
 void    server::help()
 {
-    std::cout << "/nick [nick_name]          change your nickname\n"
-                    "/user [login]              change your login\n"
-                    "/join [channel]            join channel\n"
-                    "/leave                     leave current channel\n"
-                    "/quit                      quit irc\n"
-                    "/who                       list of users in current channel\n"
-                    "/msg [login] [msg]         submit msg to login\n"
-                    "/list                      list of channel\n"
-                    "[msg]                      send msg to current channel" << std::endl << std::endl;
+    std::cout << "\"/nick [nick_name]\"         change your nickname\n"
+                    "\"/user [login]\"             change your login\n"
+                    "\"/join [channel]\"           join channel\n"
+                    "/leave                      leave current channel\n"
+                    "/quit                       quit irc\n"
+                    "/who                        list of users in current channel\n"
+                    "\"/msg [login] [msg]\"        submit msg to login\n"
+                    "/list                       list of channel\n"
+                    "[msg]                       send msg to current channel" << std::endl << std::endl;
 }
 
 void    server::nick()
 {
-    std::cout << "nick" << std::endl;
+    std::cout << "nick ->" << std::endl;
+    std::cout << "Changing your nick name to : " << _command[2] << std::endl;
+    
+
 }
 void    server::user()
 {
     std::cout << "user" << std::endl;
 }
+void    server::who()
+{
+    std::cout << "There is " << _nbClient << " person in this channel :" << std::endl;
+    for (int i = 0; i < _nbClient; i++)
+        std::cout << _loginClient[i] << ", nick name : " << _nickClient[i] << std::endl;
+
+}
+
 
 void    server::quit()
 {
@@ -114,12 +125,14 @@ void    server::quit()
     close(_socketFd); 
 }
 
-void    server::manageMsg(std::string input)
+
+
+void   server::onlyOne(std::string input)
 {
     int i = 0;
-    std::string call[4] = {"/help", "/nick", "/user", "/quit"};
-    void (server::*ptr[4])() = {&server::help, &server::nick, &server::user, &server::quit};
-    while (i < 4)
+    std::string call[3] = {"/help", "/quit", "/who"};
+    void (server::*ptr[3])() = {&server::help, &server::quit, &server::who};
+    while (i < 2)
     {
         if (input == call[i])
             break;
@@ -142,33 +155,123 @@ void    server::manageMsg(std::string input)
                 (this->*ptr[2])();
                 break;
             }
-        case 3:
+        default :
+        {
+            std::cout << "Undefined command : type : \"/help\" for info." << std::endl;
+        }
+    }
+}
+
+
+
+void    server::manageInput(std::string input)
+{
+    size_t start = 0;
+    size_t end = input.find(" ");
+    _command.push_back(toStr(_clientFd));
+    // std::cout << _command[0] << std::endl;
+    while (end != std::string::npos)
+    {
+        _command.push_back(input.substr(start, end - start));
+        start = end + 1;
+        end = input.find(" ", start);
+    }
+    _command.push_back(input.substr(start));
+    // for (std::vector<std::string>::iterator it = command.begin(); it != command.end(); it++)
+    // {
+        
+    // }
+    int i = 0;
+    std::string call[2] = {"/nick", "/user"};
+    void (server::*ptr[2])() = {&server::nick, &server::user};
+    while (i < 2)
+    {
+        if (_command[1] == call[i])
+            break;
+        i++;
+    }
+    switch (i)
+    {
+        case 0:
             {
-                (this->*ptr[3])();
+                (this->*ptr[0])();
                 break;
             }
-        default:
+        case 1:
             {
-                std::cout << "Undefined command : type : \"/help\" for info." << std::endl;
+                (this->*ptr[1])(); 
+                break;
+            }
+        default :
+            {
+                sendMessage(input);
                 break;
             }
     }
 }
+void    server::sendMessage(std::string input)
+{
+    std::cout << input << std::endl;
+}
+
+void    server::manageMsg(std::string input)
+{
+    size_t sepa = 0;
+    sepa = input.find(" ");
+    if (sepa != std::string::npos)
+    {
+        manageInput(input);
+    }
+    else
+    {
+        onlyOne(input);
+    }
+    // std::string call[4] = {"/help", "/nick", "/user", "/quit"};
+    // void (server::*ptr[4])() = {&server::help, &server::nick, &server::user, &server::quit};
+    // while (i < 4)
+    // {
+    //     if (input == call[i])
+    //         break;
+    //     i++;
+    // }
+    // switch (i)
+    // {
+    //     case 0:
+    //         {
+    //             (this->*ptr[0])();
+    //             break;
+    //         }
+    //     case 1:
+    //         {
+    //             (this->*ptr[1])(); 
+    //             break;
+    //         }
+    //     case 2:
+    //         {
+    //             (this->*ptr[2])();
+    //             break;
+    //         }
+    //     case 3:
+    //         {
+    //             (this->*ptr[3])();
+    //             break;
+    //         }
+    //     default:
+    //         {
+    //             std::cout << "Undefined command : type : \"/help\" for info." << std::endl;
+    //             break;
+    //         }
+    // }
+}
 
 void    server::readingClient(std::string loginClient)
 {
-    std::cout << "New client connected : " << loginClient << std::endl << std::endl;
+    std::cout << loginClient << " is connected" << std::endl << std::endl;
     _bytesRead = 1;
     char buff[BUFSIZ];
     while (_bytesRead >= 0)
     {
-        // std::cout << "We are gonna to read on client socket" << std::endl << std::endl;
         _bytesRead = recv(_clientFd, buff, BUFSIZ, 0);
-        // if (_bytesRead == 0)
-        // {
-        //     std::cout << "Client socket : " << _clientFd << " closed" << std::endl;
-        //     break;
-        // std::cout << buff << std::endl;
         std::string input = buff;
         
         if (_bytesRead == -1)    
@@ -179,16 +282,11 @@ void    server::readingClient(std::string loginClient)
             int msgSize = message.size();
             int bytesSend;
             buff[_bytesRead] = '\0';
-            // std::cout << "Message received from client socket : " << _clientFd
-            // << " -> " << buff << std::endl;
             bytesSend = send(_clientFd, message.c_str(), msgSize, 0);
             if (bytesSend == -1)
                 throw sendError();
             else if (bytesSend == msgSize)
             {
-                std::cout << "Message : " << input << std::endl
-                            << "Socket client : " <<  _clientFd << std::endl
-                            << "Login client : "  << loginClient << std::endl << std::endl;
                 manageMsg(input);
             }
             else
@@ -202,6 +300,16 @@ void    server::readingClient(std::string loginClient)
     close(_clientFd);
 }
 
+void   server::printInfoNewUser(int clientFd)
+{
+    std::cout << "there is a new client -> " << std::endl;
+    for (int i = 0; i < _nbClient; i++)
+    {
+        std::cout << "Socket client : " <<  clientFd << std::endl
+                << "Login client : "  << _loginClient[i] << std::endl 
+                << "Nickname client : " << _nickClient[i] << std::endl << std::endl;
+    }
+}
 
 
 void    server::run()
@@ -253,8 +361,13 @@ void    server::handleClient(int clientFd)
         std::ostringstream oss;
         oss << "Guest N_" << clientFd;
         _loginClient[i] = oss.str();
+        _nickClient[i] = "No nick name";
+        printInfoNewUser(clientFd);
         readingClient(_loginClient[i]);
+
+        
     }
+    
 }
 
 // int num = clientFd;
