@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 17:21:53 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/23 17:57:53 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/26 15:55:27 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 
 client::client()
 {
-    std::cout << "Client default constructor" << std::endl;
+    // std::cout << "Client default constructor" << std::endl;
 }
 
 client::~client()
@@ -35,7 +35,7 @@ void    client::initSocket()
     _socketFd = socket(_sa.sin_family, SOCK_STREAM, 0);
     if (_socketFd == -1)
         socketFdError();
-    std::cout << "Socket create, fd : " << _socketFd << std::endl;
+    // std::cout << "Socket create, fd : " << _socketFd << std::endl;
 }
 
 void    client::connectServer()
@@ -48,15 +48,10 @@ void    client::connectServer()
 
 void   client::handleMessage(void)
 {
-    try
-    {
-        if (_msg == "exit")
-            exitSocket();
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << e.what() << std::endl;   
-    }
+  
+    if (_msg == "exit")
+        throw exitSocket();
+  
 }
 
 void    client::sendMessage()
@@ -65,7 +60,7 @@ void    client::sendMessage()
     {
         std::cout << "$> : ";
         std::cin >> _msg;
-        std::cout << "We send the message : " << _msg << std::endl;
+        // std::cout << "We send the message : " << _msg << std::endl;
         _msgLen = _msg.size();
         _bytesSent = send(_socketFd, _msg.c_str(), _msgLen, 0);
         if (_bytesSent == -1)
@@ -88,17 +83,17 @@ void    client::receivedMessage()
     while (_bytesRead >= 0) 
     {
         _bytesRead = recv(_socketFd, buffer, BUFSIZ, 0);
-        if (_bytesRead == 0) 
-        {
-            std::cout << "Server closed" << std::endl;
-            break ;
-        }
-        else if (_bytesRead == -1)
+        // if (_bytesRead == 0) 
+        // {
+        //     std::cout << "Server closed" << std::endl;
+        //     break ;
+        // }
+        if (_bytesRead == -1)
             recvError();
         else 
         {
             buffer[_bytesRead] = '\0';
-            std::cout << "Message received !" << std::endl;
+            std::cout << "Message received : " << buffer << std::endl;
             break ;
         }
     }

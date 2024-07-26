@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/26 11:25:58 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/26 16:36:46 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 #define SERVER_HPP
 
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <netdb.h>
 #include <cstdio>
 #include <string.h>
@@ -22,6 +24,8 @@
 #include <unistd.h>
 
 #define PORT 4242
+#define MAXCLIENT 10
+#define MAXCHANNEL 3
 
 class server
 {
@@ -34,7 +38,10 @@ class server
         int                     _clientFd;
         int                     _status;
         int                     _bytesRead;
-        
+        int                     _nbClient;
+        std::string             _loginClient[MAXCLIENT];
+        std::string             _nickClient[MAXCLIENT];
+        std::string             _channel[MAXCHANNEL];
         
     public:
         
@@ -46,8 +53,13 @@ class server
         void    initSocket(void);
         void    initBind(void);
         void    initListen(void);
-        void    readingClient(void);
+        void    readingClient(std::string loginClient);
         void    handleClient(int clientFd);
+        void    manageMsg(std::string input);
+        void    help(void);
+        void    nick(void);
+        void    user(void);
+        void    quit(void);
         
         class socketFdError : public std::exception
         {
