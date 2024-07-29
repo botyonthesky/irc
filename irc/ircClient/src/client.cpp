@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 17:21:53 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/26 17:50:12 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/29 13:53:57 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,6 @@ void    client::sendMessage()
     try
     {
         std::cout << "$> : ";
-        // std::cin >> _msg;
         std::getline(std::cin, _msg);
         std::cout << _msg << std::endl;
         _msgLen = _msg.size();
@@ -84,11 +83,6 @@ void    client::receivedMessage()
     while (_bytesRead >= 0) 
     {
         _bytesRead = recv(_socketFd, buffer, BUFSIZ, 0);
-        // if (_bytesRead == 0) 
-        // {
-        //     std::cout << "Server closed" << std::endl;
-        //     break ;
-        // }
         if (_bytesRead == -1)
             recvError();
         else 

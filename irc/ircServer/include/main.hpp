@@ -1,25 +1,37 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   main.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/07/17 14:45:13 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/29 13:08:36 by botyonthesk      ###   ########.fr       */
+/*   Created: 2024/07/29 13:07:04 by botyonthesk       #+#    #+#             */
+/*   Updated: 2024/07/29 13:13:47 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../include/main.hpp"
+#ifndef MAIN_HPP
+#define MAIN_HPP
 
-int main(int argc, char **argv)
-{
-    (void)argc;
-    (void)argv;
-    std::cout << "[ SERVER ]" << std::endl;
-    server ircserv;
 
-    ircserv.run();       
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <netdb.h>
+#include <cstdio>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <climits>
+#include <vector> 
 
-    return (0);
-}
+#include "server.hpp"
+#include "user.hpp"
+
+#define MAXCLIENT 10
+#define MAXCHANNEL 3
+#define PORT 4242
+
+
+#endif 

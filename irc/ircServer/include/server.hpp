@@ -6,28 +6,20 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/26 19:42:05 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/29 15:41:05 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <netdb.h>
-#include <cstdio>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <climits>
-#include <vector>
+#include "../include/main.hpp"
 
-#define PORT 4242
 #define MAXCLIENT 10
 #define MAXCHANNEL 3
+#define PORT 4242
+
+class user;
 
 class server
 {
@@ -41,6 +33,7 @@ class server
         int                         _status;
         int                         _bytesRead;
         int                         _nbClient;
+        int                         _idxClient[MAXCLIENT];
         std::string                 _loginClient[MAXCLIENT];
         std::string                 _nickClient[MAXCLIENT];
         std::string                 _channel[MAXCHANNEL];
@@ -56,19 +49,20 @@ class server
         void    initSocket(void);
         void    initBind(void);
         void    initListen(void);
-        void    readingClient(std::string loginClient);
+        void    waitingClient(void);
+        void    readingClient(user * user);
         void    handleClient(int clientFd);
-        void    manageMsg(std::string input);
-        void    manageInput(std::string input);
-        void    onlyOne(std::string input);
-        void    help(void);
-        void    nick(void);
-        void    user(void);
-        void    quit(void);
-        void    who(void);
+        void    manageMsg(user * user, std::string input);
+        void    manageInput(user * user, std::string input);
+        void    onlyOne(user * user, std::string input);
+        void    help();
+        // void    nick(void);
+        // void    userName(void);
+        void    quit(user *user);
+        void    who();
 
         void    sendMessage(std::string input);
-        void    printInfoNewUser(int clientFd);
+        void    printInfoNewUser(user *user);
 
         
         class socketFdError : public std::exception

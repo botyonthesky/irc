@@ -10,7 +10,9 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../include/server.hpp"
+// #include "../include/server.hpp"
+// #include "../include/user.hpp"
+#include "../include/main.hpp"
 
 server::server() : _nbClient(1)
 {
@@ -97,41 +99,30 @@ void    server::help()
                     "[msg]                       send msg to current channel" << std::endl << std::endl;
 }
 
-void    server::nick()
-{
-    std::cout << "nick ->" << std::endl;
-    std::cout << "Changing your nick name to : " << _command[2] << std::endl;
-    
 
-}
-void    server::user()
+
+void    server::quit(user * user)
 {
-    std::cout << "user" << std::endl;
+    std::cout << "Now closing client : " << user->getName() << std::endl;
+    close(user->getClientFd());
+    waitingClient();
 }
+
+
 void    server::who()
 {
-    std::cout << "There is " << _nbClient << " person in this channel :" << std::endl;
-    for (int i = 0; i < _nbClient; i++)
-        std::cout << _loginClient[i] << ", nick name : " << _nickClient[i] << std::endl;
-
+    std::cout << "who" << std::endl;
 }
-
-
-void    server::quit()
+void   server::onlyOne(user * user, std::string input)
 {
-    std::cout << "Now closing client fd : " << _clientFd << std::endl;
-    close(_clientFd);
-    std::cout << "Now closing server fd : " << _socketFd << std::endl;
-    close(_socketFd); 
-}
-
-
-
-void   server::onlyOne(std::string input)
-{
+    if (input == "/quit")
+    {
+        quit(user);
+        return ;
+    }
     int i = 0;
-    std::string call[3] = {"/help", "/quit", "/who"};
-    void (server::*ptr[3])() = {&server::help, &server::quit, &server::who};
+    std::string call[2] = {"/help", "/who"};
+    void (server::*ptr[2])() = {&server::help, &server::who};
     while (i < 2)
     {
         if (input == call[i])
@@ -150,26 +141,20 @@ void   server::onlyOne(std::string input)
                 (this->*ptr[1])(); 
                 break;
             }
-        case 2:
-            {
-                (this->*ptr[2])();
-                break;
-            }
         default :
         {
-            std::cout << "Undefined command : type : \"/help\" for info." << std::endl;
+            sendMessage(input);
+            std::cout << "\"/help\" for info." << std::endl;
         }
     }
 }
 
 
 
-void    server::manageInput(std::string input)
+void    server::manageInput(user * user, std::string input)
 {
     size_t start = 0;
     size_t end = input.find(" ");
-    _command.push_back(toStr(_clientFd));
-    // std::cout << _command[0] << std::endl;
     while (end != std::string::npos)
     {
         _command.push_back(input.substr(start, end - start));
@@ -177,16 +162,12 @@ void    server::manageInput(std::string input)
         end = input.find(" ", start);
     }
     _command.push_back(input.substr(start));
-    // for (std::vector<std::string>::iterator it = command.begin(); it != command.end(); it++)
-    // {
-        
-    // }
     int i = 0;
-    std::string call[2] = {"/nick", "/user"};
-    void (server::*ptr[2])() = {&server::nick, &server::user};
+    std::string call[3] = {"/nick", "/user", "/quit"};
+    void (user::*ptr[3])() = {&user::nick, &user::userName, &user::quit};
     while (i < 2)
     {
-        if (_command[1] == call[i])
+        if (_command[0] == call[i])
             break;
         i++;
     }
@@ -194,12 +175,17 @@ void    server::manageInput(std::string input)
     {
         case 0:
             {
-                (this->*ptr[0])();
+                (user->*ptr[0])();
                 break;
             }
         case 1:
             {
-                (this->*ptr[1])(); 
+                (user->*ptr[1])(); 
+                break;
+            }
+        case 2 :
+            {
+                (user->*ptr[2])();
                 break;
             }
         default :
@@ -214,64 +200,29 @@ void    server::sendMessage(std::string input)
     std::cout << input << std::endl;
 }
 
-void    server::manageMsg(std::string input)
+void    server::manageMsg(user * user, std::string input)
 {
     size_t sepa = 0;
     sepa = input.find(" ");
     if (sepa != std::string::npos)
     {
-        manageInput(input);
+        manageInput(user, input);
     }
     else
     {
-        onlyOne(input);
+        onlyOne(user, input);
     }
-    // std::string call[4] = {"/help", "/nick", "/user", "/quit"};
-    // void (server::*ptr[4])() = {&server::help, &server::nick, &server::user, &server::quit};
-    // while (i < 4)
-    // {
-    //     if (input == call[i])
-    //         break;
-    //     i++;
-    // }
-    // switch (i)
-    // {
-    //     case 0:
-    //         {
-    //             (this->*ptr[0])();
-    //             break;
-    //         }
-    //     case 1:
-    //         {
-    //             (this->*ptr[1])(); 
-    //             break;
-    //         }
-    //     case 2:
-    //         {
-    //             (this->*ptr[2])();
-    //             break;
-    //         }
-    //     case 3:
-    //         {
-    //             (this->*ptr[3])();
-    //             break;
-    //         }
-    //     default:
-    //         {
-    //             std::cout << "Undefined command : type : \"/help\" for info." << std::endl;
-    //             break;
-    //         }
-    // }
 }
 
-void    server::readingClient(std::string loginClient)
+void    server::readingClient(user * user)
 {
-    std::cout << loginClient << " is connected" << std::endl << std::endl;
+    std::cout << user->getName() << " is connected" << std::endl << std::endl;
     _bytesRead = 1;
-    char buff[BUFSIZ];
+    
     while (_bytesRead >= 0)
     {
-        _bytesRead = recv(_clientFd, buff, BUFSIZ, 0);
+        char buff[BUFSIZ] = {0};
+        _bytesRead = recv(user->getClientFd(), buff, BUFSIZ, 0);
         std::string input = buff;
         
         if (_bytesRead == -1)    
@@ -282,12 +233,12 @@ void    server::readingClient(std::string loginClient)
             int msgSize = message.size();
             int bytesSend;
             buff[_bytesRead] = '\0';
-            bytesSend = send(_clientFd, message.c_str(), msgSize, 0);
+            bytesSend = send(user->getClientFd(), message.c_str(), msgSize, 0);
             if (bytesSend == -1)
                 throw sendError();
             else if (bytesSend == msgSize)
             {
-                manageMsg(input);
+                manageMsg(user, input);
             }
             else
             {
@@ -300,15 +251,12 @@ void    server::readingClient(std::string loginClient)
     close(_clientFd);
 }
 
-void   server::printInfoNewUser(int clientFd)
+void   server::printInfoNewUser(user *user)
 {
     std::cout << "there is a new client -> " << std::endl;
-    for (int i = 0; i < _nbClient; i++)
-    {
-        std::cout << "Socket client : " <<  clientFd << std::endl
-                << "Login client : "  << _loginClient[i] << std::endl 
-                << "Nickname client : " << _nickClient[i] << std::endl << std::endl;
-    }
+    std::cout << "Socket client : " <<  user->getClientFd() << std::endl
+            << "Login client : "  << user->getName() << std::endl 
+            << "Nickname client : " << user->getNick() << std::endl << std::endl;
 }
 
 
@@ -327,50 +275,35 @@ void    server::run()
         
         _addrSize = sizeof(_clienAddr);
         
-        // std::cout << "Address size : " << _addrSize << std::endl;
-        std::cout << "Waiting for client connection" << std::endl << std::endl;
-    
-        while (true) 
-        {
-            _clientFd = accept(_socketFd, (struct sockaddr *)&_clienAddr, &_addrSize);
-            // std::cout << "Accept, client fd : " << _clientFd << std::endl;
-            if (_clientFd == -1)
-                throw clientFdError();
-            // std::cout << "Accept new connection on client fd : " << _clientFd << std::endl;
-
-            
-            handleClient(_clientFd);
-            _nbClient++;
-        }
-        std::cout << "Now closing client fd : " << _clientFd << std::endl;
-        close(_clientFd);
-        std::cout << "Now closing server fd : " << _socketFd << std::endl;
-        close(_socketFd); 
+        waitingClient();
     }
     catch(const std::exception& e)
     {
         std::cerr << e.what() << '\n';
     }
 }
-
+void    server::waitingClient()
+{
+    std::cout << "Waiting for client connection" << std::endl << std::endl;
+    while (true) 
+    {
+        _clientFd = accept(_socketFd, (struct sockaddr *)&_clienAddr, &_addrSize);
+        if (_clientFd == -1)
+            throw clientFdError();
+        handleClient(_clientFd);
+        _nbClient++;
+    }
+}
 void    server::handleClient(int clientFd)
 {
     _clientFd = clientFd;
+    
+
     for (int i = 0; i < _nbClient; i++)
     {
-        std::ostringstream oss;
-        oss << "Guest N_" << clientFd;
-        _loginClient[i] = oss.str();
-        _nickClient[i] = "No nick name";
-        printInfoNewUser(clientFd);
-        readingClient(_loginClient[i]);
-
-        
+        user *newUser = new user(clientFd);
+        _idxClient[i] = i;
+        printInfoNewUser(newUser);
+        readingClient(newUser);
     }
-    
 }
-
-// int num = clientFd;
-// std::ostringstream oss;
-// oss << "Guest N_" << num;
-// _loginClient[i] = oss.str();
