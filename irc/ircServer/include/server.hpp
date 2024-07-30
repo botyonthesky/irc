@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/29 15:41:05 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/30 15:33:33 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,15 +55,19 @@ class server
         void    manageMsg(user * user, std::string input);
         void    manageInput(user * user, std::string input);
         void    onlyOne(user * user, std::string input);
-        void    help();
+        // void    help();
         // void    nick(void);
         // void    userName(void);
         void    quit(user *user);
         void    who();
 
-        void    sendMessage(std::string input);
+        void    sendMessage(std::vector<std::string> command);
         void    printInfoNewUser(user *user);
 
+        int     getNbClient(void);
+        int     getNbChannel(void);
+
+        std::string                 loginClient[MAXCLIENT];
         
         class socketFdError : public std::exception
         {

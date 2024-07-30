@@ -61,43 +61,25 @@ void    server::initServer()
 
 void    server::initSocket()
 {
-    
     _socketFd = socket(_sa.sin_family, SOCK_STREAM, 0);
     if (_socketFd == -1)
         throw socketFdError();
-    // std::cout << "Creation of server socket fd : " << _socketFd << std::endl;
 }
 
 void    server::initBind()
 {
     _status = bind(_socketFd, (struct sockaddr *)&_sa, sizeof(_sa));
-    // std::cout << "Status of bind : " << _status << std::endl;
     if (_status != 0)
         throw bindError();
 }
 void    server::initListen()
 {
-    // std::cout << "Listen on port : " << PORT << std::endl;
     _status = listen(_socketFd, 20);
-    
-    // std::cout << "Status of listen : " << _status << std::endl;
-        
     if (_status != 0)
         throw listenError();
 }
 
-void    server::help()
-{
-    std::cout << "\"/nick [nick_name]\"         change your nickname\n"
-                    "\"/user [login]\"             change your login\n"
-                    "\"/join [channel]\"           join channel\n"
-                    "/leave                      leave current channel\n"
-                    "/quit                       quit irc\n"
-                    "/who                        list of users in current channel\n"
-                    "\"/msg [login] [msg]\"        submit msg to login\n"
-                    "/list                       list of channel\n"
-                    "[msg]                       send msg to current channel" << std::endl << std::endl;
-}
+
 
 
 
@@ -111,7 +93,13 @@ void    server::quit(user * user)
 
 void    server::who()
 {
-    std::cout << "who" << std::endl;
+    std::cout << "You are actually in the channel : " << _channel << std::endl;
+    std::cout << "there is actually " << _nbClient << " client : " << std::endl;
+    for (int i = 0; i < _nbClient; i++)
+    {
+        std::cout << "Name : " << _loginClient[i] << ", nickname : "
+        << _nickClient[i] << std::endl;   
+    }
 }
 void   server::onlyOne(user * user, std::string input)
 {
@@ -122,7 +110,7 @@ void   server::onlyOne(user * user, std::string input)
     }
     int i = 0;
     std::string call[2] = {"/help", "/who"};
-    void (server::*ptr[2])() = {&server::help, &server::who};
+    void (user::*ptr[2])() = {&user::help, &user::who};
     while (i < 2)
     {
         if (input == call[i])
@@ -133,17 +121,17 @@ void   server::onlyOne(user * user, std::string input)
     {
         case 0:
             {
-                (this->*ptr[0])();
+                (user->*ptr[0])();
                 break;
             }
         case 1:
             {
-                (this->*ptr[1])(); 
+                (user->*ptr[1])(); 
                 break;
             }
         default :
         {
-            sendMessage(input);
+            std::cout << input << std::endl;
             std::cout << "\"/help\" for info." << std::endl;
         }
     }
@@ -165,7 +153,7 @@ void    server::manageInput(user * user, std::string input)
     int i = 0;
     std::string call[3] = {"/nick", "/user", "/quit"};
     void (user::*ptr[3])() = {&user::nick, &user::userName, &user::quit};
-    while (i < 2)
+    while (i < 3)
     {
         if (_command[0] == call[i])
             break;
@@ -190,14 +178,20 @@ void    server::manageInput(user * user, std::string input)
             }
         default :
             {
-                sendMessage(input);
+                std::cout << input << std::endl;
+                // sendMessage(_command);
                 break;
             }
     }
 }
-void    server::sendMessage(std::string input)
+void    server::sendMessage(std::vector<std::string> command)
 {
-    std::cout << input << std::endl;
+    for (std::vector<std::string>::iterator it = command.begin(); it != command.end(); it++)
+    {
+        std::cout << *it << " ";
+    }
+    std::cout << std::endl;
+    command.clear();
 }
 
 void    server::manageMsg(user * user, std::string input)
@@ -301,9 +295,22 @@ void    server::handleClient(int clientFd)
 
     for (int i = 0; i < _nbClient; i++)
     {
-        user *newUser = new user(clientFd);
+        user *newUser = new user(*this, clientFd);
         _idxClient[i] = i;
+        loginClient[i] = newUser->getName();
+        std::cout << "loginnnn : " << loginClient[i] << std::endl;
         printInfoNewUser(newUser);
         readingClient(newUser);
     }
+}
+
+
+int     server::getNbClient(void)
+{
+    return (_nbClient);
+}
+int     server::getNbChannel(void)
+{
+    int i = 0;
+    return (i);
 }
