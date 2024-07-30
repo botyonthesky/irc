@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 13:07:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/29 13:13:47 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/30 17:19:21 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@
 
 #include "server.hpp"
 #include "user.hpp"
+#include "channel.hpp"
 
 #define MAXCLIENT 10
 #define MAXCHANNEL 3

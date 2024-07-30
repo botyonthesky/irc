@@ -109,9 +109,9 @@ void   server::onlyOne(user * user, std::string input)
         return ;
     }
     int i = 0;
-    std::string call[2] = {"/help", "/who"};
-    void (user::*ptr[2])() = {&user::help, &user::who};
-    while (i < 2)
+    std::string call[3] = {"/info", "/help", "/who"};
+    void (user::*ptr[3])() = {&user::info, &user::help, &user::who};
+    while (i < 3)
     {
         if (input == call[i])
             break;
@@ -129,20 +129,30 @@ void   server::onlyOne(user * user, std::string input)
                 (user->*ptr[1])(); 
                 break;
             }
+        case 2:
+            {
+                (user->*ptr[2])(); 
+                break;
+            }
         default :
         {
-            std::cout << input << std::endl;
-            std::cout << "\"/help\" for info." << std::endl;
+            if (user->getNick() == "undefined")
+                std::cout << user->getName() << ": ";
+            else
+                std::cout << user->getNick() << ": ";
+            std::cout << input << std::endl << std::endl;
+            
         }
     }
 }
 
 
-
-void    server::manageInput(user * user, std::string input)
+void    server::parsingCommand(std::string input)
 {
+    // std::cout << "parsing input : " << input << std::endl;
     size_t start = 0;
     size_t end = input.find(" ");
+    _command.clear();
     while (end != std::string::npos)
     {
         _command.push_back(input.substr(start, end - start));
@@ -150,9 +160,15 @@ void    server::manageInput(user * user, std::string input)
         end = input.find(" ", start);
     }
     _command.push_back(input.substr(start));
+}
+
+void    server::manageInput(user * user, std::string input)
+{
+    parsingCommand(input);
+    // sendMessage(_command);
     int i = 0;
-    std::string call[3] = {"/nick", "/user", "/quit"};
-    void (user::*ptr[3])() = {&user::nick, &user::userName, &user::quit};
+    std::string call[4] = {"/nick", "/user", "/quit", "/join"};
+    void (user::*ptr[4])() = {&user::nick, &user::userName, &user::quit, &user::join};
     while (i < 3)
     {
         if (_command[0] == call[i])
@@ -176,22 +192,33 @@ void    server::manageInput(user * user, std::string input)
                 (user->*ptr[2])();
                 break;
             }
+        case 3 :
+            {
+                (user->*ptr[3])();
+                break;
+            }
         default :
             {
-                std::cout << input << std::endl;
-                // sendMessage(_command);
+                if (user->getNick() == "undefined")
+                    std::cout << user->getName() << ": ";
+                else
+                    std::cout << user->getNick() << ": ";
+                std::cout << input << std::endl << std::endl;
                 break;
             }
     }
 }
 void    server::sendMessage(std::vector<std::string> command)
 {
+    std::cout << "------------------contenu de command-------------------" << std::endl;
     for (std::vector<std::string>::iterator it = command.begin(); it != command.end(); it++)
     {
         std::cout << *it << " ";
     }
     std::cout << std::endl;
-    command.clear();
+    if (command.empty())
+        std::cout << " is empty" << std::endl; 
+    std::cout << "------------------fin de command-------------------" << std::endl;
 }
 
 void    server::manageMsg(user * user, std::string input)
@@ -199,22 +226,20 @@ void    server::manageMsg(user * user, std::string input)
     size_t sepa = 0;
     sepa = input.find(" ");
     if (sepa != std::string::npos)
-    {
         manageInput(user, input);
-    }
     else
-    {
         onlyOne(user, input);
-    }
 }
 
 void    server::readingClient(user * user)
 {
     std::cout << user->getName() << " is connected" << std::endl << std::endl;
+    std::cout << "\"/help\" for info." << std::endl;
     _bytesRead = 1;
     
     while (_bytesRead >= 0)
     {
+    
         char buff[BUFSIZ] = {0};
         _bytesRead = recv(user->getClientFd(), buff, BUFSIZ, 0);
         std::string input = buff;
@@ -313,4 +338,8 @@ int     server::getNbChannel(void)
 {
     int i = 0;
     return (i);
+}
+std::vector<std::string>   server::getCommand(void)
+{
+    return (_command);
 }

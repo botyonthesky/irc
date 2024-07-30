@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/30 15:33:33 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/30 16:15:48 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,10 +62,12 @@ class server
         void    who();
 
         void    sendMessage(std::vector<std::string> command);
+        void    parsingCommand(std::string input);
         void    printInfoNewUser(user *user);
 
-        int     getNbClient(void);
-        int     getNbChannel(void);
+        int                         getNbClient(void);
+        int                         getNbChannel(void);
+        std::vector<std::string>    getCommand(void);
 
         std::string                 loginClient[MAXCLIENT];
         

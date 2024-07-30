@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 12:03:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/30 15:28:58 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/30 17:33:49 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@ user::user(server& srv, int clientFd) : _server(srv), _clientFd(clientFd), _inCh
     std::ostringstream oss;
     oss << "Guest N_" << clientFd;
     _name = oss.str();
-    _nickname = "Undefined";
+    _nickname = "undefined";
     std::cout << "User construct" << std::endl;
 }
 
@@ -49,15 +49,18 @@ std::string     user::getCurrChannel(void)
 {
     return (_currChannel);
 }
-
-void   user::userName()
+bool    user::isValidName()
 {
-    std::cout << "user" << std::endl;
+    std::string name = _server.getCommand()[1];
+    if (!isalpha(name[0]))
+        return (false);
+    return (true);
 }
 
 void    user::help()
 {
-    std::cout << "\"/nick [nick_name]\"         change your nickname\n"
+    std::cout <<    "\"/info\"                     display your information\n"
+                    "\"/nick [nick_name]\"         change your nickname\n"
                     "\"/user [login]\"             change your login\n"
                     "\"/join [channel]\"           join channel\n"
                     "/leave                      leave current channel\n"
@@ -67,12 +70,59 @@ void    user::help()
                     "/list                       list of channel\n"
                     "[msg]                       send msg to current channel" << std::endl << std::endl;
 }
+
+void    user::info()
+{
+    std::cout << "Your user name is : " << _name << ", your nick name is : "
+    << _nickname << std::endl; 
+    if (!_inChannel)
+        std::cout << "You re not in any channel right now !" << std::endl;
+    else
+    {
+        std::cout << "You re in the channel : " << _currChannel << std::endl;  
+    }
+}
 void    user::nick()
 {
-    std::cout << "nick ->" << std::endl;
-    
-
+    try
+    {
+        if (!isValidName())
+            throw NotValidNickName();
+        std::cout << "Your nickname was : " << _nickname
+        << " its now : " << _server.getCommand()[1] << std::endl;
+        _nickname = _server.getCommand()[1];
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
 }
+
+
+void   user::userName()
+{
+    try
+    {
+        if (!isValidName())
+            throw NotValidUserName();
+        std::cout << "user ->" << std::endl;
+        std::cout << "You username was : " << _name
+        << " its now : " << _server.getCommand()[1] << std::endl;
+        _name = _server.getCommand()[1];   
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+}
+
+void    user::join()
+{
+    std::cout << "join ->" << std::endl;
+    channel *newChannel = new channel(_server.getCommand()[1]);
+    (void)newChannel;
+}
+
 void    user::quit()
 {
     std::cout << _name << " have quit the server" << std::endl;
@@ -94,9 +144,15 @@ void    user::who()
     }
 }
 
+const char*     user::NotValidUserName::what() const throw()
+{
+    return ("The username is not valid !");
+}
 
 
-
-
+const char*     user::NotValidNickName::what() const throw()
+{
+    return ("The nickname is not valid !");
+}
 
 

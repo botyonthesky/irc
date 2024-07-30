@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 17:21:53 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/29 13:53:57 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/30 16:04:41 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,6 @@ void    client::initSocket()
     _socketFd = socket(_sa.sin_family, SOCK_STREAM, 0);
     if (_socketFd == -1)
         socketFdError();
-    // std::cout << "Socket create, fd : " << _socketFd << std::endl;
 }
 
 void    client::connectServer()
