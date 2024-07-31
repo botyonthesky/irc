@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:38:47 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/26 11:20:47y botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/31 11:45:58by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,16 +14,24 @@
 // #include "../include/user.hpp"
 #include "../include/main.hpp"
 
-server::server() : _nbClient(1)
+server::server() : _nbClient(0)
 {
     // std::cout << "Server default constructor" << std::endl;
 }
 
 server::~server()
 {
+    close(_socketFd);
+    for (size_t i = 0; i < _pollFds.size(); i++)
+        close(_pollFds[i].fd);
     std::cout << "Server destructor" << std::endl;
+
 }
 
+const char* server::pollError::what() const throw()
+{
+    return ("Error on poll");
+}
 const char* server::socketFdError::what() const throw()
 {
     return ("Error on socket fd");
@@ -70,24 +78,33 @@ void    server::initBind()
 {
     _status = bind(_socketFd, (struct sockaddr *)&_sa, sizeof(_sa));
     if (_status != 0)
+    {
+        close(_socketFd);
         throw bindError();
+    }
 }
 void    server::initListen()
 {
     _status = listen(_socketFd, 20);
     if (_status != 0)
+    {
+        close(_socketFd);
         throw listenError();
+    }
 }
 
-
-
-
-
+void    server::initPoll()
+{
+    struct pollfd serverPollFd;
+    serverPollFd.fd = _socketFd;
+    serverPollFd.events = POLLIN;
+    _pollFds.push_back(serverPollFd);
+}
 void    server::quit(user * user)
 {
     std::cout << "Now closing client : " << user->getName() << std::endl;
     close(user->getClientFd());
-    waitingClient();
+    // waitingClient();
 }
 
 
@@ -208,20 +225,42 @@ void    server::manageInput(user * user, std::string input)
             }
     }
 }
-void    server::sendMessage(std::vector<std::string> command)
+
+void    server::sendMessage(int clientFd, std::string message)
 {
-    std::cout << "------------------contenu de command-------------------" << std::endl;
-    for (std::vector<std::string>::iterator it = command.begin(); it != command.end(); it++)
+    int msgSize = message.size();
+    int bytesSend = send(clientFd, message.c_str(), msgSize, 0);
+    if (bytesSend == -1)
+        throw sendError();
+    else if (bytesSend != msgSize)
     {
-        std::cout << *it << " ";
+        std::cout << "Only partial message received by client socket : " << _clientFd
+        << ", bytes send = " << bytesSend << std::endl;
     }
-    std::cout << std::endl;
-    if (command.empty())
-        std::cout << " is empty" << std::endl; 
-    std::cout << "------------------fin de command-------------------" << std::endl;
 }
 
-void    server::manageMsg(user * user, std::string input)
+void    server::manageMsg(int clientFd, std::string input)
+{
+    std::cout << "manage msg" << std::endl;
+    user* currUser = NULL;
+    for(int i = 0; i < _nbClient; i++)
+    {
+        if (_userN[i]->getClientFd() == clientFd)
+        {
+            currUser = _userN[i];
+            break;
+        }
+    }
+    if (currUser != NULL)
+        parsingMsg(currUser, input);
+    else
+        std::cout << "currUser is null" << std::endl;
+    // std::cout << "Message from client fd " << clientFd << ": " << input << std::endl;
+    // parsingMsg();
+    sendMessage(clientFd, "Got ya!");
+    (void)input;
+}
+void    server::parsingMsg(user * user, std::string input)
 {
     size_t sepa = 0;
     sepa = input.find(" ");
@@ -231,53 +270,60 @@ void    server::manageMsg(user * user, std::string input)
         onlyOne(user, input);
 }
 
-void    server::readingClient(user * user)
+void    server::readingClient(int clientFd)
 {
-    std::cout << user->getName() << " is connected" << std::endl << std::endl;
-    std::cout << "\"/help\" for info." << std::endl;
-    _bytesRead = 1;
-    
-    while (_bytesRead >= 0)
+    char buff[BUFSIZ] = {0};
+    _bytesRead = recv(clientFd, buff, BUFSIZ, 0);
+    std::string input = buff;
+    if (_bytesRead == -1)    
+        throw recvError();
+    else if (_bytesRead == 0)
     {
-    
-        char buff[BUFSIZ] = {0};
-        _bytesRead = recv(user->getClientFd(), buff, BUFSIZ, 0);
-        std::string input = buff;
-        
-        if (_bytesRead == -1)    
-            throw recvError();
-        else
+        std::cout << "Client disconnected, fd : " << clientFd << std::endl;
+        close(clientFd);
+        for (size_t i = 0; i < _pollFds.size(); i++)
         {
-            std::string message = "Got ya !";
-            int msgSize = message.size();
-            int bytesSend;
-            buff[_bytesRead] = '\0';
-            bytesSend = send(user->getClientFd(), message.c_str(), msgSize, 0);
-            if (bytesSend == -1)
-                throw sendError();
-            else if (bytesSend == msgSize)
+            if (_pollFds[i].fd == clientFd)
             {
-                manageMsg(user, input);
+                _pollFds.erase(_pollFds.begin() + i);
+                break;
             }
-            else
+        }
+        for (int i = 0; i < _nbClient; i++)
+        {
+            if (_userN[i]->getClientFd() == clientFd)
             {
-                std::cout << "Only partial message received by client socket : " << _clientFd
-                << ", bytes send = " << bytesSend << std::endl;
+                delete _userN[i];
+                for(int j = i; j < _nbClient - 1; j++)
+                    _userN[j] = _userN[j + 1];
+                // _userN.erase(_userN.begin() + i);
+                _nbClient--;
+                break;
             }
         }
     }
-    std::cout << "Now closing client fd : " << _clientFd << std::endl;
-    close(_clientFd);
+    else
+    {
+        std::cout << "waiting msg" << std::endl;
+        buff[_bytesRead] = '\0';
+        std::string input = buff;
+        manageMsg(clientFd, input);
+    }
 }
 
-void   server::printInfoNewUser(user *user)
+void    server::handleClient(int clientFd)
 {
-    std::cout << "there is a new client -> " << std::endl;
-    std::cout << "Socket client : " <<  user->getClientFd() << std::endl
-            << "Login client : "  << user->getName() << std::endl 
-            << "Nickname client : " << user->getNick() << std::endl << std::endl;
+    if (_nbClient >= MAXCLIENT)
+    {
+        std::cerr << "Max client reach" << std::endl;
+        return ;
+    }
+    _clientFd = clientFd;
+    user *newUser = new user(*this, clientFd);
+    printInfoNewUser(newUser);
+    _userN[_nbClient] = newUser;
+    // printInfoUsers();
 }
-
 
 void    server::run()
 {
@@ -291,6 +337,7 @@ void    server::run()
         std::cout << std::endl;
 
         initListen();
+        initPoll();
         
         _addrSize = sizeof(_clienAddr);
         
@@ -298,36 +345,45 @@ void    server::run()
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
+        std::cerr << e.what() << std::endl;
     }
 }
+
+
 void    server::waitingClient()
 {
     std::cout << "Waiting for client connection" << std::endl << std::endl;
     while (true) 
     {
-        _clientFd = accept(_socketFd, (struct sockaddr *)&_clienAddr, &_addrSize);
-        if (_clientFd == -1)
-            throw clientFdError();
-        handleClient(_clientFd);
+        int pollCount = poll(&_pollFds[0], _pollFds.size(), -1);
+        if (pollCount == -1)
+            throw pollError();
+        for (size_t i = 0; i < _pollFds.size(); i++)
+        {
+            if (_pollFds[i].revents & POLLIN)
+            {
+                if (_pollFds[i].fd == _socketFd)
+                {
+                    _clientFd = accept(_socketFd, (struct sockaddr *)&_clienAddr, &_addrSize);
+                    if (_clientFd == -1)
+                        throw clientFdError();
+                    struct pollfd clientPollFd;
+                    clientPollFd.fd = _clientFd;
+                    clientPollFd.events = POLLIN;
+                    _pollFds.push_back(clientPollFd);
+                    std::cout << "New client connected, fd : " << _clientFd << std::endl;
+                    handleClient(_clientFd);
+                }
+                else
+                {
+                    readingClient(_pollFds[i].fd);
+                }
+            }
+        }
         _nbClient++;
     }
 }
-void    server::handleClient(int clientFd)
-{
-    _clientFd = clientFd;
-    
 
-    for (int i = 0; i < _nbClient; i++)
-    {
-        user *newUser = new user(*this, clientFd);
-        _idxClient[i] = i;
-        loginClient[i] = newUser->getName();
-        std::cout << "loginnnn : " << loginClient[i] << std::endl;
-        printInfoNewUser(newUser);
-        readingClient(newUser);
-    }
-}
 
 
 int     server::getNbClient(void)
@@ -342,4 +398,23 @@ int     server::getNbChannel(void)
 std::vector<std::string>   server::getCommand(void)
 {
     return (_command);
+}
+
+
+void   server::printInfoNewUser(user *user)
+{
+    std::cout << "there is a new client -> " << std::endl;
+    std::cout << "Socket client : " <<  user->getClientFd() << std::endl
+            << "Login client : "  << user->getName() << std::endl 
+            << "Nickname client : " << user->getNick() << std::endl << std::endl;
+}
+
+void   server::printInfoUsers()
+{
+    for (int i = 0; i < _nbClient; i++)
+    {
+        std::cout << "Socket client : " << _userN[i]->getClientFd() << std::endl
+            << "Login client : "  << _userN[i]->getName() << std::endl 
+            << "Nickname client : " << _userN[i]->getNick() << std::endl << std::endl;
+    }
 }

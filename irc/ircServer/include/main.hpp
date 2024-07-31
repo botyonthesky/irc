@@ -6,14 +6,15 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 13:07:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/30 17:19:21 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/31 11:36:59 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef MAIN_HPP
 #define MAIN_HPP
 
-
+#include <poll.h>
+#include <netinet/in.h>
 #include <iostream>
 #include <sstream>
 #include <string>

@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/30 16:15:48 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/31 13:46:38 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,8 +32,10 @@ class server
         int                         _clientFd;
         int                         _status;
         int                         _bytesRead;
+        std::vector<struct pollfd>  _pollFds;
         int                         _nbClient;
         int                         _idxClient[MAXCLIENT];
+        user*                        _userN[MAXCLIENT];
         std::string                 _loginClient[MAXCLIENT];
         std::string                 _nickClient[MAXCLIENT];
         std::string                 _channel[MAXCHANNEL];
@@ -49,10 +51,13 @@ class server
         void    initSocket(void);
         void    initBind(void);
         void    initListen(void);
+        void    initPoll(void);
         void    waitingClient(void);
-        void    readingClient(user * user);
+        void    readingClient(int clientFD);
         void    handleClient(int clientFd);
-        void    manageMsg(user * user, std::string input);
+        void    removeUser(int clientFd);
+        void    manageMsg(int clientFd, std::string input);
+        void    parsingMsg(user * user, std::string input);
         void    manageInput(user * user, std::string input);
         void    onlyOne(user * user, std::string input);
         // void    help();
@@ -61,9 +66,10 @@ class server
         void    quit(user *user);
         void    who();
 
-        void    sendMessage(std::vector<std::string> command);
+        void    sendMessage(int clientFd, std::string message);
         void    parsingCommand(std::string input);
         void    printInfoNewUser(user *user);
+        void    printInfoUsers();
 
         int                         getNbClient(void);
         int                         getNbChannel(void);
@@ -97,6 +103,11 @@ class server
         };
 
         class sendError : public std::exception
+        {
+            virtual const char* what() const throw();
+        };
+
+        class pollError : public std::exception
         {
             virtual const char* what() const throw();
         };

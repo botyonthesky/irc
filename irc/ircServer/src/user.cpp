@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 12:03:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/30 17:33:49 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/07/31 11:21:06 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -132,15 +132,18 @@ void    user::quit()
 void    user::who()
 {
     if (!_inChannel)
+    {
         std::cout << "You re not in any channel right now !" << std::endl;
+        std::cout << "There is actually " << _server.getNbClient() << " client(s) in the server." << std::endl;
+    }
     else
     {
         std::cout << "You are actually in the channel : " << _currChannel << std::endl;
         std::cout << "there is actually " << _server.getNbClient() << " client(s) in this channel -> " << std::endl;
-        for (int i = 0; i < _server.getNbClient(); i++)
-        {
-            std::cout << "Name : " << _server.loginClient[i] << ", nickname : " << std::endl;   
-        }
+    }
+    for (int i = 0; i < _server.getNbClient(); i++)
+    {
+        std::cout << "Name : " << _server.loginClient[i] << ", nickname : " << std::endl;   
     }
 }
 
