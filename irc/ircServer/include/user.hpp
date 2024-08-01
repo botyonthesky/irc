@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/30 17:31:38 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/01 11:09:36 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@ class user
                 ~user();
 
                 bool            isValidName(void);
+                bool            checkUserList(void);
                 int             getClientFd(void);
                 int             getIdx(void);
                 std::string     getName(void);
@@ -48,6 +49,7 @@ class user
                 void            info(void);
                 void            who(void);
                 void            nick(void);
+                void            msg(void);
                 void            quit(void);
                 void            help(void);
 
@@ -60,6 +62,11 @@ class user
                 {
                         virtual const char* what() const throw();       
                 };
+
+                // class NotValidUser : public std::exception
+                // {
+                //         virtual const char* what() const throw();
+                // };
 };
 
 

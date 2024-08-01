@@ -6,7 +6,7 @@
 #    By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/07/17 14:39:31 by botyonthesk       #+#    #+#              #
-#    Updated: 2024/07/30 17:29:52 by botyonthesk      ###   ########.fr        #
+#    Updated: 2024/08/01 10:53:37 by botyonthesk      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,6 +23,7 @@ OBJ_DIR			:= ./obj
 ROOT_SRC		:= 	server.cpp \
 					user.cpp \
 					channel.cpp \
+					utils.cpp \
 					main.cpp 
 
 ROOT_DIR		:= $(SRC_DIR)

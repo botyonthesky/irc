@@ -149,6 +149,10 @@ void   server::onlyOne(user * user, std::string input)
 
 void    server::parsingCommand(std::string input)
 {
+    
+    // std::cout << "parsing - >" << std::endl;
+    input = trim_and_reduce_spaces(input);
+    // std::cout << input << std::endl;
     size_t start = 0;
     size_t end = input.find(" ");
     _command.clear();
@@ -161,13 +165,23 @@ void    server::parsingCommand(std::string input)
     _command.push_back(input.substr(start));
 }
 
+
+void    server::printCmd()
+{
+    for (std::vector<std::string>::iterator it = _command.begin(); it != _command.end(); it++)
+    {
+        std::cout << *it << std::endl;
+    }
+}
+
 void    server::manageInput(user * user, std::string input)
 {
     parsingCommand(input);
+    // printCmd();
     int i = 0;
-    std::string call[4] = {"/nick", "/user", "/quit", "/join"};
-    void (user::*ptr[4])() = {&user::nick, &user::userName, &user::quit, &user::join};
-    while (i < 4)
+    std::string call[5] = {"/nick", "/user", "/quit", "/join", "/msg"};
+    void (user::*ptr[5])() = {&user::nick, &user::userName, &user::quit, &user::join, &user::msg};
+    while (i < 5)
     {
         if (_command[0] == call[i])
             break;
@@ -193,6 +207,11 @@ void    server::manageInput(user * user, std::string input)
         case 3 :
             {
                 (user->*ptr[3])();
+                break;
+            }
+        case 4 :
+            {
+                (user->*ptr[4])();
                 break;
             }
         default :
@@ -240,7 +259,6 @@ void    server::manageMsg(int clientFd, std::string input)
     else
         std::cout << "currUser is null" << std::endl;
     sendMessage(clientFd, "Got ya!");
-    (void)input;
 }
 void    server::parsingMsg(user * user, std::string input)
 {
@@ -364,6 +382,7 @@ void    server::waitingClient()
                     _pollFds.push_back(clientPollFd);
                     std::cout << "New client connected, fd : " << _clientFd << std::endl;
                     handleClient(_clientFd);
+                    _nbClient++;
                 }
                 else
                 {
@@ -371,7 +390,7 @@ void    server::waitingClient()
                 }
             }
         }
-        _nbClient++;
+
     }
 }
 
@@ -389,6 +408,42 @@ std::vector<std::string>   server::getCommand(void)
     return (_command);
 }
 
+std::vector<std::string>  server::getLogin()
+{
+    return (_loginClient);
+}
+
+void    server::setLogin(std::string login)
+{
+    _loginClient.push_back(login);
+}
+void    server::delUserList(user * user)
+{
+    std::vector<std::string> tmp = this->_loginClient;
+    if (tmp.size() == 1)
+        _loginClient.pop_back();
+    else
+    {
+        for (std::vector<std::string>::iterator it = _loginClient.begin(); it != _loginClient.end(); it++)
+        {
+            if (*it == user->getName())
+            {
+                _loginClient.pop_back();
+                break;
+            }
+        }
+    }
+}
+
+
+void    server::printLoginList()
+{
+    std::cout << "print list " << std::endl;
+    for (std::vector<std::string>::iterator it = _loginClient.begin(); it != _loginClient.end(); it++)
+    {
+        std::cout << *it << std::endl;
+    }
+}
 
 void   server::printInfoNewUser(user *user)
 {

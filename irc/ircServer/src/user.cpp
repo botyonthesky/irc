@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 12:03:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/31 11:21:06 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/01 12:38:28 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,15 +16,19 @@
 user::user(server& srv, int clientFd) : _server(srv), _clientFd(clientFd), _inChannel(false)
 {
     std::ostringstream oss;
-    oss << "Guest N_" << clientFd;
+    oss << "GuestN_" << clientFd;
     _name = oss.str();
     _nickname = "undefined";
     std::cout << "User construct" << std::endl;
+    std::cout << "on push dans _server" << std::endl;
+    _server.setLogin(_name);
 }
 
 user::~user()
 {
+    _server.delUserList(this);
     std::cout << "User destruct" << std::endl;
+    
 }
 
 int             user::getClientFd(void)
@@ -122,6 +126,47 @@ void    user::join()
     channel *newChannel = new channel(_server.getCommand()[1]);
     (void)newChannel;
 }
+bool    user::checkUserList()
+{
+    std::cout << " check user list " << std::endl;
+    std::vector<std::string> tmp = _server.getLogin();
+    if (tmp.size() == 1)
+        return (false);
+    else
+    {
+        for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); it++)
+        {
+            std::cout << "it = " << *it << std::endl;
+
+            if (_server.getCommand()[1] == *it)
+            {
+                std::cout << "true" << std::endl;
+                return (true);
+            }
+        }
+    }   
+    std::cout << "false " << std::endl;
+    return (false);
+    
+}
+
+void    user::msg()
+{
+    try
+    {
+        _server.printLoginList();
+        std::cout << "msg - > " << std::endl;
+        if (!checkUserList())
+            throw NotValidUserName();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    
+
+    
+}
 
 void    user::quit()
 {
@@ -131,6 +176,7 @@ void    user::quit()
 
 void    user::who()
 {
+    
     if (!_inChannel)
     {
         std::cout << "You re not in any channel right now !" << std::endl;
@@ -141,9 +187,15 @@ void    user::who()
         std::cout << "You are actually in the channel : " << _currChannel << std::endl;
         std::cout << "there is actually " << _server.getNbClient() << " client(s) in this channel -> " << std::endl;
     }
-    for (int i = 0; i < _server.getNbClient(); i++)
+    std::vector<std::string> tmp = _server.getLogin();
+    if (tmp.size() == 1) 
+        std::cout << "User : " << this->_name << std::endl;
+    else
     {
-        std::cout << "Name : " << _server.loginClient[i] << ", nickname : " << std::endl;   
+        for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); it++)
+        {
+            std::cout << "User : " << *it << std::endl;
+        }
     }
 }
 
@@ -159,3 +211,7 @@ const char*     user::NotValidNickName::what() const throw()
 }
 
 
+// const char* user::NotValidUser::what() const throw()
+// {
+//     return("This login is not valid");
+// }

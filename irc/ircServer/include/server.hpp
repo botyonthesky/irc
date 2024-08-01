@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/01 09:57:38 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/01 12:19:00 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,8 +35,8 @@ class server
         std::vector<struct pollfd>  _pollFds;
         int                         _nbClient;
         int                         _idxClient[MAXCLIENT];
-        user*                        _userN[MAXCLIENT];
-        std::string                 _loginClient[MAXCLIENT];
+        user*                       _userN[MAXCLIENT];
+        std::vector<std::string>    _loginClient;
         std::string                 _nickClient[MAXCLIENT];
         std::string                 _channel[MAXCHANNEL];
         std::vector<std::string>    _command; 
@@ -59,6 +59,8 @@ class server
         void    manageMsg(int clientFd, std::string input);
         void    parsingMsg(user * user, std::string input);
         void    manageInput(user * user, std::string input);
+        void    printLoginList(void);
+        void    delUserList(user * user);
         void    onlyOne(user * user, std::string input);
         // void    help();
         // void    nick(void);
@@ -69,11 +71,14 @@ class server
         void    sendMessage(int clientFd, std::string message);
         void    parsingCommand(std::string input);
         void    printInfoNewUser(user *user);
-        void    printInfoUsers();
+        void    printInfoUsers(void);
+        void    printCmd(void);
 
         int                         getNbClient(void);
         int                         getNbChannel(void);
         std::vector<std::string>    getCommand(void);
+        std::vector<std::string>    getLogin(void);
+        void                        setLogin(std::string login);
 
         std::string                 loginClient[MAXCLIENT];
         
