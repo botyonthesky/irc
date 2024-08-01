@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 12:03:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/01 12:38:28 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/01 14:53:08 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,20 +15,18 @@
 
 user::user(server& srv, int clientFd) : _server(srv), _clientFd(clientFd), _inChannel(false)
 {
+    std::cout << "User construct" << std::endl;
     std::ostringstream oss;
     oss << "GuestN_" << clientFd;
     _name = oss.str();
     _nickname = "undefined";
-    std::cout << "User construct" << std::endl;
-    std::cout << "on push dans _server" << std::endl;
     _server.setLogin(_name);
 }
 
 user::~user()
 {
     _server.delUserList(this);
-    std::cout << "User destruct" << std::endl;
-    
+    std::cout << "User destruct of : " << this->_name << std::endl;
 }
 
 int             user::getClientFd(void)
@@ -112,7 +110,8 @@ void   user::userName()
         std::cout << "user ->" << std::endl;
         std::cout << "You username was : " << _name
         << " its now : " << _server.getCommand()[1] << std::endl;
-        _name = _server.getCommand()[1];   
+        _server.updateLoginList(_name, _server.getCommand()[1]);
+        _name = _server.getCommand()[1]; 
     }
     catch(const std::exception& e)
     {
@@ -136,16 +135,10 @@ bool    user::checkUserList()
     {
         for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); it++)
         {
-            std::cout << "it = " << *it << std::endl;
-
             if (_server.getCommand()[1] == *it)
-            {
-                std::cout << "true" << std::endl;
                 return (true);
-            }
         }
     }   
-    std::cout << "false " << std::endl;
     return (false);
     
 }
@@ -154,18 +147,18 @@ void    user::msg()
 {
     try
     {
-        _server.printLoginList();
+        // _server.printLoginList();
         std::cout << "msg - > " << std::endl;
         if (!checkUserList())
             throw NotValidUserName();
+        std::cout << "try to send this msg : " << _server.getCommand()[2] << ", to : " << _server.getCommand()[1] << std::endl;
+        
+        _server.sendMessage()
     }
     catch(const std::exception& e)
     {
         std::cerr << e.what() << '\n';
     }
-    
-
-    
 }
 
 void    user::quit()
@@ -176,7 +169,6 @@ void    user::quit()
 
 void    user::who()
 {
-    
     if (!_inChannel)
     {
         std::cout << "You re not in any channel right now !" << std::endl;

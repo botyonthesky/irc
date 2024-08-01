@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 17:21:53 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/30 16:04:41 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/01 14:47:34 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,7 +87,7 @@ void    client::receivedMessage()
         else 
         {
             buffer[_bytesRead] = '\0';
-            std::cout << "Message received : " << buffer << std::endl;
+            std::cout << "Message received from IRC : " << buffer << std::endl;
             break ;
         }
     }

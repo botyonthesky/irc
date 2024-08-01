@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/01 12:19:00 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/01 14:08:56 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,7 @@ class server
         void    manageMsg(int clientFd, std::string input);
         void    parsingMsg(user * user, std::string input);
         void    manageInput(user * user, std::string input);
+        void    updateLoginList(std::string old, std::string login);
         void    printLoginList(void);
         void    delUserList(user * user);
         void    onlyOne(user * user, std::string input);
@@ -66,7 +67,7 @@ class server
         // void    nick(void);
         // void    userName(void);
         void    quit(user *user);
-        void    who();
+        // void    who();
 
         void    sendMessage(int clientFd, std::string message);
         void    parsingCommand(std::string input);

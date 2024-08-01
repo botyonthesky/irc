@@ -91,16 +91,16 @@ void    server::quit(user * user)
     close(user->getClientFd());
 }
 
-void    server::who()
-{
-    std::cout << "You are actually in the channel : " << _channel << std::endl;
-    std::cout << "there is actually " << _nbClient << " client : " << std::endl;
-    for (int i = 0; i < _nbClient; i++)
-    {
-        std::cout << "Name : " << _loginClient[i] << ", nickname : "
-        << _nickClient[i] << std::endl;   
-    }
-}
+// void    server::who()
+// {
+//     std::cout << "You are actually in the channel : " << _channel << std::endl;
+//     std::cout << "there is actually " << _nbClient << " client : " << std::endl;
+//     for (int i = 0; i < _nbClient; i++)
+//     {
+//         std::cout << "Name : " << _loginClient[i] << ", nickname : "
+//         << _nickClient[i] << std::endl;   
+//     }
+// }
 void   server::onlyOne(user * user, std::string input)
 {
     if (input == "/quit")
@@ -415,12 +415,13 @@ std::vector<std::string>  server::getLogin()
 
 void    server::setLogin(std::string login)
 {
+    // std::cout << "set login : " << login << std::endl;
     _loginClient.push_back(login);
 }
 void    server::delUserList(user * user)
 {
-    std::vector<std::string> tmp = this->_loginClient;
-    if (tmp.size() == 1)
+    // std::vector<std::string> tmp = this->_loginClient;
+    if (_loginClient.size() == 1)
         _loginClient.pop_back();
     else
     {
@@ -428,7 +429,28 @@ void    server::delUserList(user * user)
         {
             if (*it == user->getName())
             {
-                _loginClient.pop_back();
+                _loginClient.erase(it);
+                // printLoginList();
+                break;
+            }
+        }
+    }
+}
+
+void    server::updateLoginList(std::string old, std::string login)
+{
+    // std::vector<std::string> tmp = this->_loginClient;
+    if (_loginClient.size() == 1)
+        _loginClient[0] = login;
+    else
+    {
+        for (std::vector<std::string>::iterator it = _loginClient.begin(); it != _loginClient.end(); it++)
+        {
+            if (*it == old)
+            {
+                _loginClient.erase(it);
+                _loginClient.push_back(login);
+                printLoginList();
                 break;
             }
         }
@@ -439,7 +461,8 @@ void    server::delUserList(user * user)
 void    server::printLoginList()
 {
     std::cout << "print list " << std::endl;
-    for (std::vector<std::string>::iterator it = _loginClient.begin(); it != _loginClient.end(); it++)
+    std::vector<std::string> tmp = _loginClient;
+    for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); it++)
     {
         std::cout << *it << std::endl;
     }
