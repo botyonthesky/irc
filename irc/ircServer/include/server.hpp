@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/31 13:46:38 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/01 09:57:38 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,39 +77,14 @@ class server
 
         std::string                 loginClient[MAXCLIENT];
         
-        class socketFdError : public std::exception
+        class initError : public std::exception
         {
-            virtual const char* what() const throw();  
-        };
-
-        class bindError : public std::exception
-        {
-            virtual const char* what() const throw(); 
-        };
-
-        class listenError : public std::exception
-        {
-            virtual const char* what() const throw();
-        };
-
-        class clientFdError : public std::exception
-        {
-            virtual const char* what() const throw();  
-        };
-
-        class recvError : public std::exception
-        {
-            virtual const char* what() const throw();  
-        };
-
-        class sendError : public std::exception
-        {
-            virtual const char* what() const throw();
-        };
-
-        class pollError : public std::exception
-        {
-            virtual const char* what() const throw();
+            public : 
+                explicit initError(const std::string& error);
+                virtual const char* what() const throw();
+            
+            private : 
+                char       _error[100];
         };
 };
 

@@ -10,8 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-// #include "../include/server.hpp"
-// #include "../include/user.hpp"
 #include "../include/main.hpp"
 
 server::server() : _nbClient(0)
@@ -28,38 +26,19 @@ server::~server()
 
 }
 
-const char* server::pollError::what() const throw()
+const char* server::initError::what() const throw()
 {
-    return ("Error on poll");
-}
-const char* server::socketFdError::what() const throw()
-{
-    return ("Error on socket fd");
+    return (_error);
 }
 
-const char* server::bindError::what() const throw()
+server::initError::initError(const std::string& error)
 {
-    return ("Error on bind");
+    std::strncpy(_error, "Error on : ", 99);
+    std::strncat(_error, error.c_str(), 99 - std::strlen(_error));
+    _error[99] = '\0';
+
 }
 
-const char* server::listenError::what() const throw()
-{
-    return ("Error on listen");
-}
-
-const char* server::clientFdError::what() const throw()
-{
-    return ("Error on cliend fd");
-}
-
-const char* server::recvError::what() const throw()
-{
-    return ("Error on recv");
-}
-const char* server::sendError::what() const throw()
-{
-    return ("Error on send");
-}
 void    server::initServer()
 {
     _sa.sin_family = AF_INET;
@@ -70,8 +49,11 @@ void    server::initServer()
 void    server::initSocket()
 {
     _socketFd = socket(_sa.sin_family, SOCK_STREAM, 0);
-    if (_socketFd == -1)
-        throw socketFdError();
+    if (_socketFd == -1) 
+    {
+        initError ex("socket fd");
+        throw ex;
+    }
 }
 
 void    server::initBind()
@@ -80,16 +62,19 @@ void    server::initBind()
     if (_status != 0)
     {
         close(_socketFd);
-        throw bindError();
+        initError ex("bind");
+        throw ex;
     }
 }
+
 void    server::initListen()
 {
     _status = listen(_socketFd, 20);
     if (_status != 0)
     {
         close(_socketFd);
-        throw listenError();
+        initError ex("listen");
+        throw ex;
     }
 }
 
@@ -104,9 +89,7 @@ void    server::quit(user * user)
 {
     std::cout << "Now closing client : " << user->getName() << std::endl;
     close(user->getClientFd());
-    // waitingClient();
 }
-
 
 void    server::who()
 {
@@ -166,7 +149,6 @@ void   server::onlyOne(user * user, std::string input)
 
 void    server::parsingCommand(std::string input)
 {
-    // std::cout << "parsing input : " << input << std::endl;
     size_t start = 0;
     size_t end = input.find(" ");
     _command.clear();
@@ -182,11 +164,10 @@ void    server::parsingCommand(std::string input)
 void    server::manageInput(user * user, std::string input)
 {
     parsingCommand(input);
-    // sendMessage(_command);
     int i = 0;
     std::string call[4] = {"/nick", "/user", "/quit", "/join"};
     void (user::*ptr[4])() = {&user::nick, &user::userName, &user::quit, &user::join};
-    while (i < 3)
+    while (i < 4)
     {
         if (_command[0] == call[i])
             break;
@@ -231,7 +212,10 @@ void    server::sendMessage(int clientFd, std::string message)
     int msgSize = message.size();
     int bytesSend = send(clientFd, message.c_str(), msgSize, 0);
     if (bytesSend == -1)
-        throw sendError();
+    {
+        initError ex("send");
+        throw ex;
+    }
     else if (bytesSend != msgSize)
     {
         std::cout << "Only partial message received by client socket : " << _clientFd
@@ -241,7 +225,7 @@ void    server::sendMessage(int clientFd, std::string message)
 
 void    server::manageMsg(int clientFd, std::string input)
 {
-    std::cout << "manage msg" << std::endl;
+    // std::cout << "manage msg" << std::endl;
     user* currUser = NULL;
     for(int i = 0; i < _nbClient; i++)
     {
@@ -255,8 +239,6 @@ void    server::manageMsg(int clientFd, std::string input)
         parsingMsg(currUser, input);
     else
         std::cout << "currUser is null" << std::endl;
-    // std::cout << "Message from client fd " << clientFd << ": " << input << std::endl;
-    // parsingMsg();
     sendMessage(clientFd, "Got ya!");
     (void)input;
 }
@@ -276,7 +258,10 @@ void    server::readingClient(int clientFd)
     _bytesRead = recv(clientFd, buff, BUFSIZ, 0);
     std::string input = buff;
     if (_bytesRead == -1)    
-        throw recvError();
+    {
+        initError ex("recv");
+        throw ex;
+    }
     else if (_bytesRead == 0)
     {
         std::cout << "Client disconnected, fd : " << clientFd << std::endl;
@@ -304,7 +289,7 @@ void    server::readingClient(int clientFd)
     }
     else
     {
-        std::cout << "waiting msg" << std::endl;
+        // std::cout << "waiting msg" << std::endl;
         buff[_bytesRead] = '\0';
         std::string input = buff;
         manageMsg(clientFd, input);
@@ -357,7 +342,10 @@ void    server::waitingClient()
     {
         int pollCount = poll(&_pollFds[0], _pollFds.size(), -1);
         if (pollCount == -1)
-            throw pollError();
+        {
+            initError ex("poll");
+            throw ex;
+        }
         for (size_t i = 0; i < _pollFds.size(); i++)
         {
             if (_pollFds[i].revents & POLLIN)
@@ -366,7 +354,10 @@ void    server::waitingClient()
                 {
                     _clientFd = accept(_socketFd, (struct sockaddr *)&_clienAddr, &_addrSize);
                     if (_clientFd == -1)
-                        throw clientFdError();
+                    {
+                        initError ex("accept");
+                        throw ex;
+                    }
                     struct pollfd clientPollFd;
                     clientPollFd.fd = _clientFd;
                     clientPollFd.events = POLLIN;
@@ -383,8 +374,6 @@ void    server::waitingClient()
         _nbClient++;
     }
 }
-
-
 
 int     server::getNbClient(void)
 {

@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 13:07:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/31 11:36:59 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/01 09:28:59 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <climits>
-#include <vector> 
+#include <vector>
+#include <cstring> 
 
 #include "server.hpp"
 #include "user.hpp"
