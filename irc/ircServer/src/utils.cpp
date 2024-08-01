@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/01 10:50:13 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/01 10:52:48 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/01 17:49:35 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,3 +52,4 @@ std::string trim_and_reduce_spaces(const std::string& str)
     result = reduce_spaces(result);
     return (result);
 }
+

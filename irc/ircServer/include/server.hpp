@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/01 14:08:56 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/01 16:56:21 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,13 +63,14 @@ class server
         void    printLoginList(void);
         void    delUserList(user * user);
         void    onlyOne(user * user, std::string input);
+        int     findFdClient(std::string user);
         // void    help();
         // void    nick(void);
         // void    userName(void);
         void    quit(user *user);
         // void    who();
 
-        void    sendMessage(int clientFd, std::string message);
+        void    sendMessage(int clientFd, std::string from, std::string message);
         void    parsingCommand(std::string input);
         void    printInfoNewUser(user *user);
         void    printInfoUsers(void);

@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 12:03:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/01 14:53:08 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/01 17:27:26 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,8 +152,8 @@ void    user::msg()
         if (!checkUserList())
             throw NotValidUserName();
         std::cout << "try to send this msg : " << _server.getCommand()[2] << ", to : " << _server.getCommand()[1] << std::endl;
-        
-        _server.sendMessage()
+        int fdToSend = _server.findFdClient(_server.getCommand()[1]);
+        _server.sendMessage(fdToSend, this->getName(), _server.getCommand()[2]);
     }
     catch(const std::exception& e)
     {

@@ -6,12 +6,11 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 17:21:53 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/01 14:47:34 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/01 17:57:15 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../include/client.hpp"
-
+#include "../include/main.hpp"
 
 client::client()
 {
@@ -57,16 +56,13 @@ void    client::sendMessage()
 {
     try
     {
-        std::cout << "$> : ";
         std::getline(std::cin, _msg);
         std::cout << _msg << std::endl;
         _msgLen = _msg.size();
         _bytesSent = send(_socketFd, _msg.c_str(), _msgLen, 0);
         if (_bytesSent == -1)
             sendError();
-        else if (_bytesSent == _msgLen)
-            std::cout << "Full message send : " << _msg << std::endl;
-        else
+        else if (_bytesSent != _msgLen)
             std::cout << "Partial message send, only : " << _bytesSent << "bytes sent" << std::endl;
     }
     catch(const std::exception& e)
@@ -87,21 +83,40 @@ void    client::receivedMessage()
         else 
         {
             buffer[_bytesRead] = '\0';
-            std::cout << "Message received from IRC : " << buffer << std::endl;
+            std::string buffS = buffer;
+            std::string login = splitBuffer(buffS);
+            std::string msg = splitBuffer2(buffS);
+            std::cout << "Message from " << login << " : "  << msg << std::endl;
             break ;
         }
     }
 }
-
 void    client::run()
 {
     initClient();
     initSocket();
     connectServer();
+    
+    fd_set readfds;
+    int max_sd;
     while (true)
     {
-        sendMessage();
-        receivedMessage();
+        FD_ZERO(&readfds);
+        FD_SET(_socketFd, &readfds);
+        FD_SET(STDIN_FILENO, &readfds);
+
+        max_sd = _socketFd;
+        
+        int retSelect = select(max_sd + 1, &readfds, NULL, NULL, NULL); 
+
+        if (retSelect < 0)
+        {
+            std::cout << "Error on select" << std::endl;
+        }
+        if (FD_ISSET(_socketFd, &readfds))
+            receivedMessage();
+        if (FD_ISSET(STDIN_FILENO, &readfds))
+            sendMessage();
     }
     std::cout << "We are closing socket fd : " << _socketFd << std::endl;
     close(_socketFd);

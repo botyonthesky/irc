@@ -149,10 +149,7 @@ void   server::onlyOne(user * user, std::string input)
 
 void    server::parsingCommand(std::string input)
 {
-    
-    // std::cout << "parsing - >" << std::endl;
     input = trim_and_reduce_spaces(input);
-    // std::cout << input << std::endl;
     size_t start = 0;
     size_t end = input.find(" ");
     _command.clear();
@@ -226,10 +223,15 @@ void    server::manageInput(user * user, std::string input)
     }
 }
 
-void    server::sendMessage(int clientFd, std::string message)
+
+
+void    server::sendMessage(int clientFd, std::string from, std::string message)
 {
-    int msgSize = message.size();
-    int bytesSend = send(clientFd, message.c_str(), msgSize, 0);
+    char sep = '\x1F';
+    std::string userMsg = from + sep + message;
+    std::cout << userMsg << std::endl;
+    int msgSize = userMsg.size();
+    int bytesSend = send(clientFd, userMsg.c_str(), msgSize, 0);
     if (bytesSend == -1)
     {
         initError ex("send");
@@ -258,7 +260,7 @@ void    server::manageMsg(int clientFd, std::string input)
         parsingMsg(currUser, input);
     else
         std::cout << "currUser is null" << std::endl;
-    sendMessage(clientFd, "Got ya!");
+    sendMessage(clientFd, "IRC", "Got ya!");
 }
 void    server::parsingMsg(user * user, std::string input)
 {
@@ -327,7 +329,16 @@ void    server::handleClient(int clientFd)
     _userN[_nbClient] = newUser;
     // printInfoUsers();
 }
-
+int     server::findFdClient(std::string user)
+{
+   int fd;
+    for (int i = 0; i < _nbClient; i++)
+    {
+        if (_userN[i]->getName() == user)
+            fd = _userN[i]->getClientFd();
+    }
+    return (fd);
+}
 void    server::run()
 {
     try

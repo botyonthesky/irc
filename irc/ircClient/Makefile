@@ -6,7 +6,7 @@
 #    By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/07/17 17:22:21 by botyonthesk       #+#    #+#              #
-#    Updated: 2024/07/23 17:33:36 by botyonthesk      ###   ########.fr        #
+#    Updated: 2024/08/01 17:53:24 by botyonthesk      ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,6 +21,7 @@ SRC_DIR			:= ./src
 OBJ_DIR			:= ./obj
 
 ROOT_SRC		:= 	client.cpp \
+					utils.cpp \
 					main.cpp 
 
 ROOT_DIR		:= $(SRC_DIR)
