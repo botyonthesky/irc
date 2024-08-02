@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 17:21:53 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 11:03:58 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/02 12:21:55 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,27 +46,20 @@ void    client::connectServer()
 
 void   client::handleMessage(void)
 {
-    if (_msg == "exit")
+    if (_msg == "/quit")
         throw exitSocket();
 }
 
 void    client::sendMessage()
 {
-    try
-    {
-        std::getline(std::cin, _msg);
-        // std::cout << _msg << std::endl;
-        _msgLen = _msg.size();
-        _bytesSent = send(_socketFd, _msg.c_str(), _msgLen, 0);
-        if (_bytesSent == -1)
-            sendError();
-        else if (_bytesSent != _msgLen)
-            std::cout << "Partial message send, only : " << _bytesSent << "bytes sent" << std::endl;
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+    std::getline(std::cin, _msg);
+    _msgLen = _msg.size();
+    _bytesSent = send(_socketFd, _msg.c_str(), _msgLen, 0);
+    if (_bytesSent == -1)
+        sendError();
+    else if (_bytesSent != _msgLen)
+        std::cout << "Partial message send, only : " << _bytesSent << "bytes sent" << std::endl;
+    handleMessage();
 }
 
 void    client::receivedMessage()
@@ -81,72 +74,45 @@ void    client::receivedMessage()
         else 
         {
             buffer[_bytesRead] = '\0';
-            // std::string buffS = buffer;
-            // std::string login = splitBuffer(buffS);
-            // std::string msg = splitBuffer2(buffS);
-            
             std::cout << buffer << std::endl;
             break ;
         }
     }
 }
-// void    client::run()
-// {
-//     initClient();
-//     initSocket();
-//     connectServer();
-    
-//     fd_set readfds;
-//     int max_sd;
-//     while (true)
-//     {
-//         FD_ZERO(&readfds);
-//         FD_SET(_socketFd, &readfds);
-//         FD_SET(STDIN_FILENO, &readfds);
 
-//         max_sd = _socketFd;
-        
-//         int retSelect = select(max_sd + 1, &readfds, NULL, NULL, NULL); 
-
-//         if (retSelect < 0)
-//         {
-//             std::cout << "Error on select" << std::endl;
-//         }
-//         if (FD_ISSET(_socketFd, &readfds))
-//             receivedMessage();
-//         if (FD_ISSET(STDIN_FILENO, &readfds))
-//             sendMessage();
-//     }
-//     std::cout << "We are closing socket fd : " << _socketFd << std::endl;
-//     close(_socketFd);
-// }
 void    client::run()
 {
-    initClient();
-    initSocket();
-    connectServer();
-    
-    struct pollfd fds[2];
-    fds[0].fd = _socketFd;
-    fds[0].events = POLLIN;
-    fds[1].fd = STDIN_FILENO;
-    fds[1].events = POLLIN;
-    
-    while (true)
+    try
     {
-        int retSelect = poll(fds, 2, -1);
-
-        if (retSelect < 0)
+        initClient();
+        initSocket();
+        connectServer();
+        
+        struct pollfd fds[2];
+        fds[0].fd = _socketFd;
+        fds[0].events = POLLIN;
+        fds[1].fd = STDIN_FILENO;
+        fds[1].events = POLLIN;
+        
+        while (true)
         {
-            std::cout << "Error on poll" << std::endl;
-            break ;
+            int retSelect = poll(fds, 2, -1);
+
+            if (retSelect < 0)
+            {
+                std::cout << "Error on poll" << std::endl;
+                break ;
+            }
+            if (fds[0].revents & POLLIN)
+                receivedMessage();
+            if (fds[1].revents & POLLIN)
+                sendMessage();
         }
-        if (fds[0].revents & POLLIN)
-            receivedMessage();
-        if (fds[1].revents & POLLIN)
-            sendMessage();
     }
-    std::cout << "We are closing socket fd : " << _socketFd << std::endl;
+    catch(const std::exception& e)
+    {
+       std::cerr << e.what() << '\n';
+    }
     close(_socketFd);
 }
 

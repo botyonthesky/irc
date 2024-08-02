@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 10:47:09 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/02 11:27:04 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ class server
         void    waitingClient(void);
         void    readingClient(int clientFD);
         void    handleClient(int clientFd);
-        void    infoClient();
+        void    infoClient(int i);
 
         
         void    onlyOne(user * user, std::string input);

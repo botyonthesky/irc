@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 12:03:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 11:15:10 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/02 11:41:03 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ user::~user()
 {
     _server.delUserList(this);
     std::cout << "User destruct of : " << this->_name << std::endl;
+    
 }
 
 
@@ -145,7 +146,8 @@ void    user::msg()
 void    user::quit()
 {
     std::cout << _name << " have quit the server" << std::endl;
-    close(_clientFd);
+    user::~user();
+    // close(_clientFd);
 }
 
 void    user::who()
@@ -179,6 +181,11 @@ int             user::getClientFd(void)
 int            user::getIdx(void)
 {
     return (_idx);
+}
+
+void        user::setIdx(int idx)
+{
+    _idx = idx;
 }
 
 std::string     user::getName(void)

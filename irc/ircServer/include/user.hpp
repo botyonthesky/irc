@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 10:16:37 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/02 11:30:52 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,8 @@ class user
                 std::string     getName(void);
                 std::string     getNick(void);
                 std::string     getCurrChannel(void);
+
+                void            setIdx(int idx);
 
                 class NotValidUserName : public std::exception
                 {

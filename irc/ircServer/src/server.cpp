@@ -89,6 +89,25 @@ void    server::quit(user * user)
 {
     std::cout << "Now closing client : " << user->getName() << std::endl;
     close(user->getClientFd());
+    for (size_t i = 0; i < _pollFds.size(); i++)
+        {
+            if (_pollFds[i].fd == user->getClientFd())
+            {
+                _pollFds.erase(_pollFds.begin() + i);
+                break;
+            }
+        }
+        for (int i = 1; i <= _nbClient; i++)
+        {
+            if (_userN[i]->getClientFd() == user->getClientFd())
+            {
+                delete _userN[i];
+                for(int j = i; j < _nbClient - 1; j++)
+                    _userN[j] = _userN[j + 1];
+                _nbClient--;
+                break;
+            }
+        }
 }
 
 void   server::onlyOne(user * user, std::string input)
@@ -131,7 +150,6 @@ void   server::onlyOne(user * user, std::string input)
             else
                 std::cout << user->getNick() << ": ";
             std::cout << input << std::endl << std::endl;
-            
         }
     }
 }
@@ -151,7 +169,6 @@ void    server::parsingCommand(std::string input)
     }
     _command.push_back(input.substr(start));
 }
-
 
 void    server::printCmd()
 {
@@ -212,8 +229,6 @@ void    server::manageInput(user * user, std::string input)
     }
 }
 
-
-
 void    server::sendMessage(int clientFd, std::string from, std::string message)
 {
     char sep = ' ';
@@ -245,8 +260,9 @@ void    server::manageMsg(int clientFd, std::string input)
     }
     if (currUser != NULL)
     {
-        // sendMessage(currUser->getClientFd(), "IRC", "Got ya!");
         parsingMsg(currUser, input);
+        if (input != "/quit")
+            infoClient(currUser->getIdx());
     }
     else
         std::cout << "currUser is null" << std::endl;
@@ -315,53 +331,35 @@ void    server::handleClient(int clientFd)
     _clientFd = clientFd;
     user *newUser = new user(*this, clientFd);
     printInfoNewUser(newUser);
+    newUser->setIdx(_nbClient);
     _userN[_nbClient] = newUser;
-    infoClient();
+    infoClient(_nbClient);    
 }
 
-void    server::infoClient()
+void    server::infoClient(int i)
 {
     std::string info;
     std::string format = "$> ";
     std::string format2 = " ------------IRC------------[";
     std::string format3 = "]-------------->";
-    for(int i = 1; i <= _nbClient; i++)
+    info = format + _userN[i]->getName() + format2
+    + _userN[i]->getCurrChannel() + format3;
+    int msgSize = info.size();
+    int byteS = send(_userN[i]->getClientFd(), info.c_str(), msgSize, 0);
+    if (byteS == -1)
     {
-        info = format + _userN[i]->getName() + format2
-        + _userN[i]->getCurrChannel() + format3;
-        int msgSize = info.size();
-        int byteS = send(_userN[i]->getClientFd(), info.c_str(), msgSize, 0);
-        if (byteS == -1)
-        {
-            initError ex ("send");
-            throw ex;
-        }
-        else if (byteS != msgSize)
-        {
-            std::cout << "Only partial message received by client socket : " << _clientFd
-            << ", bytes send = " << byteS << std::endl;
-        }
-    }   
+        initError ex ("send");
+        throw ex;
+    }
+    else if (byteS != msgSize)
+    {
+        std::cout << "Only partial message received by client socket : " << _clientFd
+        << ", bytes send = " << byteS << std::endl;
+    }
+    // }   
 }
 
-// void    server::sendMessage(int clientFd, std::string from, std::string message)
-// {
-//     char sep = '\x1F';
-//     std::string userMsg = from + sep + message;
-//     std::cout << userMsg << std::endl;
-//     int msgSize = userMsg.size();
-//     int bytesSend = send(clientFd, userMsg.c_str(), msgSize, 0);
-//     if (bytesSend == -1)
-//     {
-//         initError ex("send");
-//         throw ex;
-//     }
-//     else if (bytesSend != msgSize)
-//     {
-//         std::cout << "Only partial message received by client socket : " << _clientFd
-//         << ", bytes send = " << bytesSend << std::endl;
-//     }
-// }
+
 int     server::findFdClient(std::string user)
 {
    int fd;
@@ -434,7 +432,6 @@ void    server::waitingClient()
                 }
             }
         }
-
     }
 }
 
@@ -468,7 +465,6 @@ void    server::updateLoginList(std::string old, std::string login)
             {
                 _loginClient.erase(it);
                 _loginClient.push_back(login);
-                // printLoginList();
                 break;
             }
         }
