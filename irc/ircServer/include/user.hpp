@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/01 11:09:36 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/02 10:16:37 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,9 +28,7 @@ class user
                 std::string         _name;
                 std::string         _nickname;
                 std::string         _currChannel;
-            
-            
-        
+
     public:
 
                 user(server & srv, int clientFD);
@@ -38,11 +36,6 @@ class user
 
                 bool            isValidName(void);
                 bool            checkUserList(void);
-                int             getClientFd(void);
-                int             getIdx(void);
-                std::string     getName(void);
-                std::string     getNick(void);
-                std::string     getCurrChannel(void);
 
                 void            userName(void);
                 void            join(void);
@@ -52,6 +45,12 @@ class user
                 void            msg(void);
                 void            quit(void);
                 void            help(void);
+                
+                int             getClientFd(void);
+                int             getIdx(void);
+                std::string     getName(void);
+                std::string     getNick(void);
+                std::string     getCurrChannel(void);
 
                 class NotValidUserName : public std::exception
                 {
@@ -62,15 +61,6 @@ class user
                 {
                         virtual const char* what() const throw();       
                 };
-
-                // class NotValidUser : public std::exception
-                // {
-                //         virtual const char* what() const throw();
-                // };
 };
-
-
-
-
 
 #endif

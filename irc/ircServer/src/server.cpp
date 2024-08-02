@@ -91,16 +91,6 @@ void    server::quit(user * user)
     close(user->getClientFd());
 }
 
-// void    server::who()
-// {
-//     std::cout << "You are actually in the channel : " << _channel << std::endl;
-//     std::cout << "there is actually " << _nbClient << " client : " << std::endl;
-//     for (int i = 0; i < _nbClient; i++)
-//     {
-//         std::cout << "Name : " << _loginClient[i] << ", nickname : "
-//         << _nickClient[i] << std::endl;   
-//     }
-// }
 void   server::onlyOne(user * user, std::string input)
 {
     if (input == "/quit")
@@ -174,7 +164,6 @@ void    server::printCmd()
 void    server::manageInput(user * user, std::string input)
 {
     parsingCommand(input);
-    // printCmd();
     int i = 0;
     std::string call[5] = {"/nick", "/user", "/quit", "/join", "/msg"};
     void (user::*ptr[5])() = {&user::nick, &user::userName, &user::quit, &user::join, &user::msg};
@@ -227,9 +216,8 @@ void    server::manageInput(user * user, std::string input)
 
 void    server::sendMessage(int clientFd, std::string from, std::string message)
 {
-    char sep = '\x1F';
+    char sep = ' ';
     std::string userMsg = from + sep + message;
-    std::cout << userMsg << std::endl;
     int msgSize = userMsg.size();
     int bytesSend = send(clientFd, userMsg.c_str(), msgSize, 0);
     if (bytesSend == -1)
@@ -246,9 +234,8 @@ void    server::sendMessage(int clientFd, std::string from, std::string message)
 
 void    server::manageMsg(int clientFd, std::string input)
 {
-    // std::cout << "manage msg" << std::endl;
     user* currUser = NULL;
-    for(int i = 0; i < _nbClient; i++)
+    for(int i = 1; i <= _nbClient; i++)
     {
         if (_userN[i]->getClientFd() == clientFd)
         {
@@ -257,10 +244,12 @@ void    server::manageMsg(int clientFd, std::string input)
         }
     }
     if (currUser != NULL)
+    {
+        // sendMessage(currUser->getClientFd(), "IRC", "Got ya!");
         parsingMsg(currUser, input);
+    }
     else
         std::cout << "currUser is null" << std::endl;
-    sendMessage(clientFd, "IRC", "Got ya!");
 }
 void    server::parsingMsg(user * user, std::string input)
 {
@@ -294,14 +283,13 @@ void    server::readingClient(int clientFd)
                 break;
             }
         }
-        for (int i = 0; i < _nbClient; i++)
+        for (int i = 1; i <= _nbClient; i++)
         {
             if (_userN[i]->getClientFd() == clientFd)
             {
                 delete _userN[i];
                 for(int j = i; j < _nbClient - 1; j++)
                     _userN[j] = _userN[j + 1];
-                // _userN.erase(_userN.begin() + i);
                 _nbClient--;
                 break;
             }
@@ -309,7 +297,6 @@ void    server::readingClient(int clientFd)
     }
     else
     {
-        // std::cout << "waiting msg" << std::endl;
         buff[_bytesRead] = '\0';
         std::string input = buff;
         manageMsg(clientFd, input);
@@ -318,6 +305,8 @@ void    server::readingClient(int clientFd)
 
 void    server::handleClient(int clientFd)
 {
+    _nbClient++;
+    std::cout << "nb client " << _nbClient << std::endl;
     if (_nbClient >= MAXCLIENT)
     {
         std::cerr << "Max client reach" << std::endl;
@@ -327,12 +316,56 @@ void    server::handleClient(int clientFd)
     user *newUser = new user(*this, clientFd);
     printInfoNewUser(newUser);
     _userN[_nbClient] = newUser;
-    // printInfoUsers();
+    infoClient();
 }
+
+void    server::infoClient()
+{
+    std::string info;
+    std::string format = "$> ";
+    std::string format2 = " ------------IRC------------[";
+    std::string format3 = "]-------------->";
+    for(int i = 1; i <= _nbClient; i++)
+    {
+        info = format + _userN[i]->getName() + format2
+        + _userN[i]->getCurrChannel() + format3;
+        int msgSize = info.size();
+        int byteS = send(_userN[i]->getClientFd(), info.c_str(), msgSize, 0);
+        if (byteS == -1)
+        {
+            initError ex ("send");
+            throw ex;
+        }
+        else if (byteS != msgSize)
+        {
+            std::cout << "Only partial message received by client socket : " << _clientFd
+            << ", bytes send = " << byteS << std::endl;
+        }
+    }   
+}
+
+// void    server::sendMessage(int clientFd, std::string from, std::string message)
+// {
+//     char sep = '\x1F';
+//     std::string userMsg = from + sep + message;
+//     std::cout << userMsg << std::endl;
+//     int msgSize = userMsg.size();
+//     int bytesSend = send(clientFd, userMsg.c_str(), msgSize, 0);
+//     if (bytesSend == -1)
+//     {
+//         initError ex("send");
+//         throw ex;
+//     }
+//     else if (bytesSend != msgSize)
+//     {
+//         std::cout << "Only partial message received by client socket : " << _clientFd
+//         << ", bytes send = " << bytesSend << std::endl;
+//     }
+// }
 int     server::findFdClient(std::string user)
 {
    int fd;
-    for (int i = 0; i < _nbClient; i++)
+    for (int i = 1; i <= _nbClient; i++)
     {
         if (_userN[i]->getName() == user)
             fd = _userN[i]->getClientFd();
@@ -347,6 +380,7 @@ void    server::run()
         initSocket();
         initBind();
 
+        std::cout << "[ SERVER RUN ]" << std::endl;
         std::cout << "Connection socket to localhost, PORT : " << PORT << std::endl;
         std::cout << std::endl;
 
@@ -393,7 +427,6 @@ void    server::waitingClient()
                     _pollFds.push_back(clientPollFd);
                     std::cout << "New client connected, fd : " << _clientFd << std::endl;
                     handleClient(_clientFd);
-                    _nbClient++;
                 }
                 else
                 {
@@ -405,33 +438,9 @@ void    server::waitingClient()
     }
 }
 
-int     server::getNbClient(void)
-{
-    return (_nbClient);
-}
-int     server::getNbChannel(void)
-{
-    int i = 0;
-    return (i);
-}
-std::vector<std::string>   server::getCommand(void)
-{
-    return (_command);
-}
 
-std::vector<std::string>  server::getLogin()
-{
-    return (_loginClient);
-}
-
-void    server::setLogin(std::string login)
-{
-    // std::cout << "set login : " << login << std::endl;
-    _loginClient.push_back(login);
-}
 void    server::delUserList(user * user)
 {
-    // std::vector<std::string> tmp = this->_loginClient;
     if (_loginClient.size() == 1)
         _loginClient.pop_back();
     else
@@ -441,7 +450,6 @@ void    server::delUserList(user * user)
             if (*it == user->getName())
             {
                 _loginClient.erase(it);
-                // printLoginList();
                 break;
             }
         }
@@ -450,7 +458,6 @@ void    server::delUserList(user * user)
 
 void    server::updateLoginList(std::string old, std::string login)
 {
-    // std::vector<std::string> tmp = this->_loginClient;
     if (_loginClient.size() == 1)
         _loginClient[0] = login;
     else
@@ -461,7 +468,7 @@ void    server::updateLoginList(std::string old, std::string login)
             {
                 _loginClient.erase(it);
                 _loginClient.push_back(login);
-                printLoginList();
+                // printLoginList();
                 break;
             }
         }
@@ -489,10 +496,34 @@ void   server::printInfoNewUser(user *user)
 
 void   server::printInfoUsers()
 {
-    for (int i = 0; i < _nbClient; i++)
+    for (int i = 1; i <= _nbClient; i++)
     {
         std::cout << "Socket client : " << _userN[i]->getClientFd() << std::endl
             << "Login client : "  << _userN[i]->getName() << std::endl 
             << "Nickname client : " << _userN[i]->getNick() << std::endl << std::endl;
     }
+}
+
+int     server::getNbClient(void)
+{
+    return (_nbClient);
+}
+int     server::getNbChannel(void)
+{
+    int i = 0;
+    return (i);
+}
+std::vector<std::string>   server::getCommand(void)
+{
+    return (_command);
+}
+
+std::vector<std::string>  server::getLogin()
+{
+    return (_loginClient);
+}
+
+void    server::setLogin(std::string login)
+{
+    _loginClient.push_back(login);
 }

@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/01 16:56:21 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/02 10:47:09 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,29 +52,32 @@ class server
         void    initBind(void);
         void    initListen(void);
         void    initPoll(void);
+        
         void    waitingClient(void);
         void    readingClient(int clientFD);
         void    handleClient(int clientFd);
-        void    removeUser(int clientFd);
+        void    infoClient();
+
+        
+        void    onlyOne(user * user, std::string input);
         void    manageMsg(int clientFd, std::string input);
+        void    sendMessage(int clientFd, std::string from, std::string message);
         void    parsingMsg(user * user, std::string input);
         void    manageInput(user * user, std::string input);
+        
         void    updateLoginList(std::string old, std::string login);
         void    printLoginList(void);
         void    delUserList(user * user);
-        void    onlyOne(user * user, std::string input);
+        void    removeUser(int clientFd);
         int     findFdClient(std::string user);
-        // void    help();
-        // void    nick(void);
-        // void    userName(void);
+        
         void    quit(user *user);
-        // void    who();
 
-        void    sendMessage(int clientFd, std::string from, std::string message);
         void    parsingCommand(std::string input);
+        void    printCmd(void);
+
         void    printInfoNewUser(user *user);
         void    printInfoUsers(void);
-        void    printCmd(void);
 
         int                         getNbClient(void);
         int                         getNbChannel(void);

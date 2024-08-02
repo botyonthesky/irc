@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 12:03:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/01 17:27:26 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/02 11:15:10 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@ user::user(server& srv, int clientFd) : _server(srv), _clientFd(clientFd), _inCh
     oss << "GuestN_" << clientFd;
     _name = oss.str();
     _nickname = "undefined";
+    _currChannel = "No channel";
     _server.setLogin(_name);
 }
 
@@ -29,28 +30,7 @@ user::~user()
     std::cout << "User destruct of : " << this->_name << std::endl;
 }
 
-int             user::getClientFd(void)
-{
-    return (_clientFd);    
-}
-int            user::getIdx(void)
-{
-    return (_idx);
-}
 
-std::string     user::getName(void)
-{
-    return (_name);
-}
-
-std::string     user::getNick(void)
-{
-    return (_nickname);
-}
-std::string     user::getCurrChannel(void)
-{
-    return (_currChannel);
-}
 bool    user::isValidName()
 {
     std::string name = _server.getCommand()[1];
@@ -80,16 +60,17 @@ void    user::info()
     if (!_inChannel)
         std::cout << "You re not in any channel right now !" << std::endl;
     else
-    {
         std::cout << "You re in the channel : " << _currChannel << std::endl;  
-    }
 }
 void    user::nick()
 {
     try
     {
         if (!isValidName())
+        {
+            _server.sendMessage(_clientFd, "IRC", "Not valid nickname");
             throw NotValidNickName();
+        }
         std::cout << "Your nickname was : " << _nickname
         << " its now : " << _server.getCommand()[1] << std::endl;
         _nickname = _server.getCommand()[1];
@@ -106,7 +87,10 @@ void   user::userName()
     try
     {
         if (!isValidName())
+        {
+            _server.sendMessage(_clientFd, "IRC", "Not valid username");
             throw NotValidUserName();
+        }
         std::cout << "user ->" << std::endl;
         std::cout << "You username was : " << _name
         << " its now : " << _server.getCommand()[1] << std::endl;
@@ -121,13 +105,13 @@ void   user::userName()
 
 void    user::join()
 {
-    std::cout << "join ->" << std::endl;
+    // std::cout << "join ->" << std::endl;
     channel *newChannel = new channel(_server.getCommand()[1]);
     (void)newChannel;
 }
 bool    user::checkUserList()
 {
-    std::cout << " check user list " << std::endl;
+    // std::cout << " check user list " << std::endl;
     std::vector<std::string> tmp = _server.getLogin();
     if (tmp.size() == 1)
         return (false);
@@ -147,11 +131,8 @@ void    user::msg()
 {
     try
     {
-        // _server.printLoginList();
-        std::cout << "msg - > " << std::endl;
         if (!checkUserList())
             throw NotValidUserName();
-        std::cout << "try to send this msg : " << _server.getCommand()[2] << ", to : " << _server.getCommand()[1] << std::endl;
         int fdToSend = _server.findFdClient(_server.getCommand()[1]);
         _server.sendMessage(fdToSend, this->getName(), _server.getCommand()[2]);
     }
@@ -191,6 +172,28 @@ void    user::who()
     }
 }
 
+int             user::getClientFd(void)
+{
+    return (_clientFd);    
+}
+int            user::getIdx(void)
+{
+    return (_idx);
+}
+
+std::string     user::getName(void)
+{
+    return (_name);
+}
+
+std::string     user::getNick(void)
+{
+    return (_nickname);
+}
+std::string     user::getCurrChannel(void)
+{
+    return (_currChannel);
+}
 const char*     user::NotValidUserName::what() const throw()
 {
     return ("The username is not valid !");
@@ -201,9 +204,3 @@ const char*     user::NotValidNickName::what() const throw()
 {
     return ("The nickname is not valid !");
 }
-
-
-// const char* user::NotValidUser::what() const throw()
-// {
-//     return("This login is not valid");
-// }
