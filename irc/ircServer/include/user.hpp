@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 11:30:52 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/02 15:56:55 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,10 +39,12 @@ class user
 
                 void            userName(void);
                 void            join(void);
-                void            info(void);
-                void            who(void);
                 void            nick(void);
                 void            msg(void);
+ 
+                void            info(void);
+                void            who(void);
+                void            list(void);
                 void            quit(void);
                 void            help(void);
                 
@@ -51,6 +53,7 @@ class user
                 std::string     getName(void);
                 std::string     getNick(void);
                 std::string     getCurrChannel(void);
+                bool            getInChannel(void);
 
                 void            setIdx(int idx);
 

@@ -12,7 +12,7 @@
 
 #include "../include/main.hpp"
 
-server::server() : _nbClient(0)
+server::server() : _nbClient(0), _nbChannel(0)
 {
     // std::cout << "Server default constructor" << std::endl;
 }
@@ -113,14 +113,11 @@ void    server::quit(user * user)
 void   server::onlyOne(user * user, std::string input)
 {
     if (input == "/quit")
-    {
         quit(user);
-        return ;
-    }
     int i = 0;
-    std::string call[3] = {"/info", "/help", "/who"};
-    void (user::*ptr[3])() = {&user::info, &user::help, &user::who};
-    while (i < 3)
+    std::string call[4] = {"/info", "/help", "/who", "/list"};
+    void (user::*ptr[4])() = {&user::info, &user::help, &user::who, &user::list};
+    while (i < 4)
     {
         if (input == call[i])
             break;
@@ -141,6 +138,11 @@ void   server::onlyOne(user * user, std::string input)
         case 2:
             {
                 (user->*ptr[2])(); 
+                break;
+            }
+        case 3:
+            {
+                (user->*ptr[3])(); 
                 break;
             }
         default :
@@ -182,9 +184,9 @@ void    server::manageInput(user * user, std::string input)
 {
     parsingCommand(input);
     int i = 0;
-    std::string call[5] = {"/nick", "/user", "/quit", "/join", "/msg"};
-    void (user::*ptr[5])() = {&user::nick, &user::userName, &user::quit, &user::join, &user::msg};
-    while (i < 5)
+    std::string call[4] = {"/nick", "/user", "/join", "/msg"};
+    void (user::*ptr[4])() = {&user::nick, &user::userName, &user::join, &user::msg};
+    while (i < 4)
     {
         if (_command[0] == call[i])
             break;
@@ -212,27 +214,58 @@ void    server::manageInput(user * user, std::string input)
                 (user->*ptr[3])();
                 break;
             }
-        case 4 :
-            {
-                (user->*ptr[4])();
-                break;
-            }
         default :
             {
-                if (user->getNick() == "undefined")
-                    std::cout << user->getName() << ": ";
-                else
-                    std::cout << user->getNick() << ": ";
-                std::cout << input << std::endl << std::endl;
+                msgToCurrent(user, input);
+                // if (user->getNick() == "undefined")
+                //     std::cout << user->getName() << ": ";
+                // else
+                //     std::cout << user->getNick() << ": ";
+                // std::cout << input << std::endl << std::endl;
                 break;
             }
     }
 }
 
+void    server::msgToCurrent(user * user, std::string input)
+{
+    if (!user->getInChannel())
+    {
+        std::cout << "Currently you aren't in any channel ! " << std::endl;
+    }
+    else
+    {
+        std::string channel = user->getCurrChannel();
+        for (int i = 1; i <= _nbChannel; i++)
+        {
+            if (channel == this->channelId[i]->getName())
+            {
+                findUser(channelId[i], user, input);
+                break ;
+            }
+        }
+    }
+}
+void    server::findUser(channel * channel, user * user, std::string input)
+{
+    for (int i = 0; i < channel->getNbUser(); i++)
+    {
+        if (channel->getUserN(i) == user)
+            i++;
+        else
+            sendMessage(channel->getUserN(i)->getClientFd(), "", input);
+    }
+}
 void    server::sendMessage(int clientFd, std::string from, std::string message)
 {
-    char sep = ' ';
-    std::string userMsg = from + sep + message;
+    std::string userMsg;
+    if (from.empty())
+        userMsg = message;
+    else
+    {
+        char sep = ' ';
+        userMsg = from + sep + message;
+    }
     int msgSize = userMsg.size();
     int bytesSend = send(clientFd, userMsg.c_str(), msgSize, 0);
     if (bytesSend == -1)
@@ -289,7 +322,7 @@ void    server::readingClient(int clientFd)
     }
     else if (_bytesRead == 0)
     {
-        std::cout << "Client disconnected, fd : " << clientFd << std::endl;
+        // std::cout << "Client disconnected, fd : " << clientFd << std::endl;
         close(clientFd);
         for (size_t i = 0; i < _pollFds.size(); i++)
         {
@@ -506,8 +539,7 @@ int     server::getNbClient(void)
 }
 int     server::getNbChannel(void)
 {
-    int i = 0;
-    return (i);
+    return (_nbChannel);
 }
 std::vector<std::string>   server::getCommand(void)
 {
@@ -523,3 +555,22 @@ void    server::setLogin(std::string login)
 {
     _loginClient.push_back(login);
 }
+
+int     server::getSocketfd()
+{
+    return (_socketFd);
+}
+
+void    server::setNbChannel(int i)
+{
+    _nbChannel += i;
+}
+// void        server::setChannel(channel * channel, int idx)
+// {
+//     _channel[idx] = channel;
+// }
+
+// channel*    server::getChannel(int idx)
+// {
+//     return (_channel[idx]);
+// }

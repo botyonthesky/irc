@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 17:21:53 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 12:21:55 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/02 14:20:47 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ client::client()
 
 client::~client()
 {
-    std::cout << "Client destructor" << std::endl;
+    // std::cout << "Client destructor" << std::endl;
 }
 
 void    client::initClient()
@@ -53,13 +53,13 @@ void   client::handleMessage(void)
 void    client::sendMessage()
 {
     std::getline(std::cin, _msg);
+    handleMessage();
     _msgLen = _msg.size();
     _bytesSent = send(_socketFd, _msg.c_str(), _msgLen, 0);
     if (_bytesSent == -1)
         sendError();
     else if (_bytesSent != _msgLen)
         std::cout << "Partial message send, only : " << _bytesSent << "bytes sent" << std::endl;
-    handleMessage();
 }
 
 void    client::receivedMessage()

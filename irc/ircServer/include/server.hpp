@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 11:27:04 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/02 16:51:59 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 #define PORT 4242
 
 class user;
+class channel;
 
 class server
 {
@@ -33,18 +34,26 @@ class server
         int                         _status;
         int                         _bytesRead;
         std::vector<struct pollfd>  _pollFds;
+        
         int                         _nbClient;
         int                         _idxClient[MAXCLIENT];
         user*                       _userN[MAXCLIENT];
         std::vector<std::string>    _loginClient;
         std::string                 _nickClient[MAXCLIENT];
-        std::string                 _channel[MAXCHANNEL];
+        
+        // channel*                    _channel[MAXCHANNEL];
+        std::string                 _channelName[MAXCHANNEL];
+        int                         _nbChannel;
+        
         std::vector<std::string>    _command; 
+
         
     public:
         
         server();
         ~server();
+
+        channel*                    channelId[MAXCHANNEL];
 
         void    run(void);
         void    initServer(void);
@@ -64,7 +73,8 @@ class server
         void    sendMessage(int clientFd, std::string from, std::string message);
         void    parsingMsg(user * user, std::string input);
         void    manageInput(user * user, std::string input);
-        
+        void    msgToCurrent(user * user, std::string input);
+       
         void    updateLoginList(std::string old, std::string login);
         void    printLoginList(void);
         void    delUserList(user * user);
@@ -79,11 +89,20 @@ class server
         void    printInfoNewUser(user *user);
         void    printInfoUsers(void);
 
+        void    findUser(channel * channel, user * user, std::string input);
+
+
         int                         getNbClient(void);
+        int                         getSocketfd(void);
         int                         getNbChannel(void);
         std::vector<std::string>    getCommand(void);
         std::vector<std::string>    getLogin(void);
+        // channel*                    getChannel(int idx);
+
         void                        setLogin(std::string login);
+        void                        setNbChannel(int nb);
+        // void                        setChannel(channel * channel, int idx);
+
 
         std::string                 loginClient[MAXCLIENT];
         

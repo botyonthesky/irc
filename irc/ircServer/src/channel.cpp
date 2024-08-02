@@ -6,25 +6,27 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:18:47 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/07/30 17:43:44 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/02 16:47:19 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/main.hpp"
 
-channel::channel(std::string name)
+channel::channel(user * user, std::string name) : _nbUsers(0)
 {
     try
     {
        if (!isValidChannelName(name))
-            throw NotValidChannelName();   
+            throw NotValidChannelName();
         _name = name;
-        std::cout << "you ve join the channel : " << _name << std::endl;
+        _nbUsers++;
+        _userN[_nbUsers] = user;
     }
     catch(const std::exception& e)
     {
         std::cerr << e.what() << '\n';
     }
+    
 }
 
 
@@ -42,8 +44,24 @@ std::string     channel::getName()
 {
     return (_name);
 }
+int         channel::getIdx(void)
+{
+    return (_idx);
+}
+void        channel::setIdx(int idx)
+{
+    _idx = idx;
+}
 
+int         channel::getNbUser()
+{
+    return (_nbUsers);
+}
 
+user*       channel::getUserN(int idx)
+{
+   return (_userN[idx]);
+}
 const char* channel::NotValidChannelName::what() const throw()
 {
     return ("The channel name is not valid\nUsage : ('#' | '&') <chstring>");
