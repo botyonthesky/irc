@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:18:47 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 16:47:19 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/02 17:46:52 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,10 @@ int         channel::getNbUser()
 user*       channel::getUserN(int idx)
 {
    return (_userN[idx]);
+}
+void        channel::setNbUser(int x)
+{
+    _nbUsers += x;
 }
 const char* channel::NotValidChannelName::what() const throw()
 {

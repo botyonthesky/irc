@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 15:56:55 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/02 17:55:44 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,8 @@ class user
 
                 bool            isValidName(void);
                 bool            checkUserList(void);
+                bool            checkChannel(void);
+                int            checkChannel2(void);
 
                 void            userName(void);
                 void            join(void);
@@ -47,6 +49,7 @@ class user
                 void            list(void);
                 void            quit(void);
                 void            help(void);
+                void            leave(void);
                 
                 int             getClientFd(void);
                 int             getIdx(void);

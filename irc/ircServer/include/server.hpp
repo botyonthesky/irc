@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 16:51:59 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/02 17:28:02 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,6 +88,7 @@ class server
 
         void    printInfoNewUser(user *user);
         void    printInfoUsers(void);
+        void    printChannelInfo(void);
 
         void    findUser(channel * channel, user * user, std::string input);
 

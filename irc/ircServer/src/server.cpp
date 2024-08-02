@@ -115,9 +115,9 @@ void   server::onlyOne(user * user, std::string input)
     if (input == "/quit")
         quit(user);
     int i = 0;
-    std::string call[4] = {"/info", "/help", "/who", "/list"};
-    void (user::*ptr[4])() = {&user::info, &user::help, &user::who, &user::list};
-    while (i < 4)
+    std::string call[5] = {"/info", "/help", "/who", "/list", "/leave"};
+    void (user::*ptr[5])() = {&user::info, &user::help, &user::who, &user::list, &user::leave};
+    while (i < 5)
     {
         if (input == call[i])
             break;
@@ -143,6 +143,11 @@ void   server::onlyOne(user * user, std::string input)
         case 3:
             {
                 (user->*ptr[3])(); 
+                break;
+            }
+        case 4:
+            {
+                (user->*ptr[4])(); 
                 break;
             }
         default :
@@ -227,6 +232,18 @@ void    server::manageInput(user * user, std::string input)
     }
 }
 
+void    server::printChannelInfo()
+{
+    std::cout << "each channel info" << std::endl;
+    for (int i = 1; i <= _nbChannel; i++)
+    {
+        std::cout << channelId[i]->getName() << std::endl;
+        std::cout << channelId[i]->getIdx() << std::endl;
+        std::cout << channelId[i]->getNbUser() << std::endl;
+    }
+}
+
+
 void    server::msgToCurrent(user * user, std::string input)
 {
     if (!user->getInChannel())
@@ -236,14 +253,17 @@ void    server::msgToCurrent(user * user, std::string input)
     else
     {
         std::string channel = user->getCurrChannel();
-        for (int i = 1; i <= _nbChannel; i++)
-        {
-            if (channel == this->channelId[i]->getName())
-            {
-                findUser(channelId[i], user, input);
-                break ;
-            }
-        }
+        std::cout << channel << std::endl;
+        (void)input;
+        // printChannelInfo()
+        // for (int i = 1; i <= _nbChannel; i++)
+        // {
+        //     if (channel == this->channelId
+        //     {
+        //         findUser(channelId[i], user, input);
+        //         break ;
+        //     }
+        // }
     }
 }
 void    server::findUser(channel * channel, user * user, std::string input)

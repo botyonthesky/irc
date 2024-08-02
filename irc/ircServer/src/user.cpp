@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 12:03:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 16:22:27 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/02 17:57:17 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,6 +65,12 @@ void    user::info()
         channel = "\nYou re in the channel : " + _currChannel + "\n"; 
     _server.sendMessage(this->_clientFd, "" , msg + channel);
 }
+
+void    user::leave()
+{
+    
+}
+
 void    user::nick()
 {
     try
@@ -109,19 +115,54 @@ void   user::userName()
     }
 }
 
+int    user::checkChannel2()
+{
+    
+    for (int i = 1; i <= _server.getNbChannel(); i++)
+    {
+        if (_server.getCommand()[1] == _server.channelId[i]->getName())
+        {
+            std::cout << "serveridx : " << _server.channelId[i]->getIdx() << std::endl;
+            return (_server.channelId[i]->getIdx());
+        }
+    }
+    return (-1);
+}
+bool    user::checkChannel()
+{
+    
+    for (int i = 1; i <= _server.getNbChannel(); i++)
+    {
+        if (_server.getCommand()[1] == _server.channelId[i]->getName())
+            return (false);
+    }
+    return (true);
+}
+
 void    user::join()
 {
-    channel *newChannel = new channel(this, _server.getCommand()[1]);
-    _inChannel = true;
-    
-    std::cout << _name << " has created and join the channel : " << _server.getCommand()[1] << std::endl;
-    _currChannel = _server.getCommand()[1];
-    _server.setNbChannel(1);
-    newChannel->setIdx(_server.getNbChannel());
-    _server.channelId[newChannel->getIdx()] = newChannel;
-    std::string msg = "Channel created and joined : " + _currChannel;
-    _server.sendMessage(_clientFd, "" , msg);
-    // _server.setChannel(newChannel, newChannel->getIdx());
+    if (checkChannel2() == -1)
+    {
+        channel *newChannel = new channel(this, _server.getCommand()[1]);
+        _inChannel = true;
+        std::cout << _name << " has created and join the channel : " << _server.getCommand()[1] << std::endl;
+        _currChannel = _server.getCommand()[1];
+        _server.setNbChannel(1);
+        newChannel->setIdx(_server.getNbChannel());
+        _server.channelId[newChannel->getIdx()] = newChannel;
+        std::string msg = "Channel created and joined : " + _currChannel;
+        _server.sendMessage(_clientFd, "" , msg);
+    }
+    else
+    {
+        _inChannel = true;
+        std::cout << _name << " has join the channel : " << _server.getCommand()[1] << std::endl;
+        _currChannel = _server.getCommand()[1];
+        std::string msg = "Channel joined : " + _currChannel;
+        _server.sendMessage(_clientFd, "", msg);
+        _server.channelId[checkChannel2()]->setNbUser(1);
+    }
+        _server.printChannelInfo();
 }
 
 
