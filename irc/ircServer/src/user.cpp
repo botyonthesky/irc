@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 12:03:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 17:57:17 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/03 02:12:13 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,19 @@ void    user::info()
 
 void    user::leave()
 {
-    
+   if (_currChannel == "No channel")
+    {
+        std::string msg = "You re actually in any channel";
+        _server.sendMessage(_clientFd, "", msg);
+    }
+    else
+    {
+        _inChannel = false;
+        std::string msg = _name + "You has leaved the channel : " + _currChannel;
+        _server.sendMessage(_clientFd, "" , msg);
+        std::cout << _name << " has left channel : " << _currChannel << std::endl;
+        _currChannel = "No channel";
+    }
 }
 
 void    user::nick()
