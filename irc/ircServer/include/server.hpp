@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 17:28:02 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/05 17:31:12 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,6 +79,7 @@ class server
         void    printLoginList(void);
         void    delUserList(user * user);
         void    removeUser(int clientFd);
+        void    findUser(channel * channel, user * user, std::string input);
         int     findFdClient(std::string user);
         
         void    quit(user *user);
@@ -88,10 +89,12 @@ class server
 
         void    printInfoNewUser(user *user);
         void    printInfoUsers(void);
-        void    printChannelInfo(void);
 
-        void    findUser(channel * channel, user * user, std::string input);
 
+        void                        checkChannel(std::string currChannel);        
+        void                        printChannelInfo(void);
+        void                        decremChannelNbUser(std::string currChannel);
+        void                        getNbUserInChannel(std::string currChannel);
 
         int                         getNbClient(void);
         int                         getSocketfd(void);

@@ -333,7 +333,7 @@ void    server::parsingMsg(user * user, std::string input)
 void    server::readingClient(int clientFd)
 {
     char buff[BUFSIZ] = {0};
-    _bytesRead = recv(clientFd, buff, BUFSIZ, 0);
+    _bytesRead = recv(clientFd, buff, BUFSIZ - 1, 0);
     std::string input = buff;
     if (_bytesRead == -1)    
     {
@@ -367,7 +367,7 @@ void    server::readingClient(int clientFd)
     else
     {
         buff[_bytesRead] = '\0';
-        std::string input = buff;
+        std::string input(buff);
         manageMsg(clientFd, input);
     }
 }
@@ -393,8 +393,8 @@ void    server::infoClient(int i)
 {
     std::string info;
     std::string format = "$> ";
-    std::string format2 = " ------------IRC------------[";
-    std::string format3 = "]-------------->";
+    std::string format2 = " ------IRC------[";
+    std::string format3 = "]------>";
     info = format + _userN[i]->getName() + format2
     + _userN[i]->getCurrChannel() + format3;
     int msgSize = info.size();
@@ -409,9 +409,7 @@ void    server::infoClient(int i)
         std::cout << "Only partial message received by client socket : " << _clientFd
         << ", bytes send = " << byteS << std::endl;
     }
-    // }   
 }
-
 
 int     server::findFdClient(std::string user)
 {
@@ -505,6 +503,38 @@ void    server::delUserList(user * user)
         }
     }
 }
+
+
+void   server::checkChannel(std::string currChannel)
+{
+    if (_nbChannel > 0)
+    {
+        for (int i = 1; i <= _nbChannel; i++)
+        {
+            if (channelId[i]->getName() == currChannel)
+            {
+                if (channelId[i]->getNbUser() == 0)
+                {
+                    channelId[i]->~channel();
+                    delete channelId[i];
+                    _nbChannel--;
+                }
+            }
+        }
+    }
+}
+
+void    server::decremChannelNbUser(std::string currChannel)
+{
+    for (int i = 1; i <= _nbChannel; i++)
+    {
+        if (channelId[i]->getName() == currChannel)
+        {
+            channelId[i]->setNbUser(-1);
+        }
+    }
+}
+
 
 void    server::updateLoginList(std::string old, std::string login)
 {

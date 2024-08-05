@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 12:03:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/03 02:12:13 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/05 15:17:3 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@ user::user(server& srv, int clientFd) : _server(srv), _clientFd(clientFd), _inCh
     std::ostringstream oss;
     oss << "GuestN_" << clientFd;
     _name = oss.str();
+    _opChannel = false;
     _nickname = "undefined";
     _currChannel = "No channel";
     _server.setLogin(_name);
@@ -66,19 +67,24 @@ void    user::info()
     _server.sendMessage(this->_clientFd, "" , msg + channel);
 }
 
+
+
 void    user::leave()
 {
    if (_currChannel == "No channel")
     {
-        std::string msg = "You re actually in any channel";
+        std::string msg = "\nYou re actually in any channel\n";
         _server.sendMessage(_clientFd, "", msg);
     }
     else
     {
+        _server.decremChannelNbUser(_currChannel);
+        _opChannel = false;
         _inChannel = false;
-        std::string msg = _name + "You has leaved the channel : " + _currChannel;
+        std::string msg = "You has leaved the channel : " + _currChannel + "\n";
         _server.sendMessage(_clientFd, "" , msg);
         std::cout << _name << " has left channel : " << _currChannel << std::endl;
+        _server.checkChannel(_currChannel);
         _currChannel = "No channel";
     }
 }
@@ -92,11 +98,12 @@ void    user::nick()
             _server.sendMessage(_clientFd, "IRC", "Not valid nickname");
             throw NotValidNickName();
         }
-        std::string msg = "Your nickname was : " + _nickname + " its now : "
-        + _server.getCommand()[1];
-        _nickname = _server.getCommand()[1];
+        std::string oldNick = _nickname;
+        std::string newNick = _server.getCommand()[1];
+        std::string msg = "Your nickname was : " + oldNick + " its now : " + newNick;
+        _nickname = newNick;
         _server.sendMessage(this->_clientFd, "", msg);
-        std::cout << _name << " has changed his nickname : " << _nickname << std::endl;
+        std::cout << _name << " has changed his nickname to : " << _nickname << std::endl;
     }
     catch(const std::exception& e)
     {
@@ -114,12 +121,13 @@ void   user::userName()
             _server.sendMessage(_clientFd, "IRC", "Not valid username");
             throw NotValidUserName();
         }
-        std::string msg = "Your username was : " + _name + " its now : "
-        + _server.getCommand()[1];
-        std::cout << _name << " has changed his username : " << _server.getCommand()[1] << std::endl;
-        _server.updateLoginList(_name, _server.getCommand()[1]);
-        _name = _server.getCommand()[1];
+        std::string newName = _server.getCommand()[1];
+        std::string oldName = _name;
+        _server.updateLoginList(oldName, newName);
+        _name = newName;
+        std::string msg = "You username was : " + oldName + ", it's now : " + newName;
         _server.sendMessage(this->_clientFd, "", msg);
+        std::cout << oldName << " has changed his username to : " << newName << std::endl;
     }
     catch(const std::exception& e)
     {
@@ -134,7 +142,7 @@ int    user::checkChannel2()
     {
         if (_server.getCommand()[1] == _server.channelId[i]->getName())
         {
-            std::cout << "serveridx : " << _server.channelId[i]->getIdx() << std::endl;
+            // std::cout << "serveridx : " << _server.channelId[i]->getIdx() << std::endl;
             return (_server.channelId[i]->getIdx());
         }
     }
@@ -151,32 +159,63 @@ bool    user::checkChannel()
     return (true);
 }
 
-void    user::join()
+void    user::registerChannel(std::string name, channel * channel)
 {
-    if (checkChannel2() == -1)
+
+    for (int i = 1; i <= _server.getNbChannel(); i++)
     {
-        channel *newChannel = new channel(this, _server.getCommand()[1]);
-        _inChannel = true;
-        std::cout << _name << " has created and join the channel : " << _server.getCommand()[1] << std::endl;
-        _currChannel = _server.getCommand()[1];
-        _server.setNbChannel(1);
-        newChannel->setIdx(_server.getNbChannel());
-        _server.channelId[newChannel->getIdx()] = newChannel;
-        std::string msg = "Channel created and joined : " + _currChannel;
-        _server.sendMessage(_clientFd, "" , msg);
+        if (_server.channelId[i]->getName() == name)
+            channelUser[i] = channel;
     }
-    else
-    {
-        _inChannel = true;
-        std::cout << _name << " has join the channel : " << _server.getCommand()[1] << std::endl;
-        _currChannel = _server.getCommand()[1];
-        std::string msg = "Channel joined : " + _currChannel;
-        _server.sendMessage(_clientFd, "", msg);
-        _server.channelId[checkChannel2()]->setNbUser(1);
-    }
-        _server.printChannelInfo();
 }
 
+void    user::join()
+{
+    std::string name = _server.getCommand()[1];
+    try
+    {
+        if (!isValidChannelName(name))
+        {
+            _server.sendMessage(_clientFd, "IRC" , "Not valid Channel name\nUsage : ('#' | '&') <chstring>");
+            throw NotValidChannelName();
+        }
+        if (checkChannel2() == -1)
+        {
+            channel *newChannel = new channel(this, name);
+            _inChannel = true;
+            std::cout << _name << " has created and join the channel : " << name << std::endl;
+            _currChannel = name;
+            _opChannel = true;
+            _server.setNbChannel(1);
+            newChannel->setIdx(_server.getNbChannel());
+            _server.channelId[newChannel->getIdx()] = newChannel;
+            std::string msg = "Channel created and joined : " + _currChannel + "\n";
+            _server.sendMessage(_clientFd, "" , msg);
+            registerChannel(name, newChannel);
+        }
+        else
+        {
+            _inChannel = true;
+            std::cout << _name << " has join the channel : " << _server.getCommand()[1] << std::endl;
+            _currChannel = _server.getCommand()[1];
+            std::string msg = "Channel joined : " + _currChannel;
+            _server.sendMessage(_clientFd, "", msg);
+            _server.channelId[checkChannel2()]->setNbUser(1);
+            registerChannel(name, _server.channelId[checkChannel2()]);
+        }
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+}
+    
+bool    user::isValidChannelName(std::string name)
+{
+    if (name[0] == '&' || name[0] == '#')
+        return (true);
+    return (false);
+}
 
 void    user::msg()
 {
@@ -193,44 +232,68 @@ void    user::msg()
     }
 }
 
+channel*    user::getChannelByIdx(int idx)
+{
+    return (channelUser[idx]);
+}
 
+channel*     user::getChannelByName(std::string name)
+{
+    for (int i = 1; i <= _server.getNbChannel(); i++)
+    {
+        if (_server.channelId[i]->getName() == name)
+            return (channelUser[i]);
+    }
+    return (NULL);
+}
 
 void    user::who()
 {
+    
+    std::string msg;
     if (!_inChannel)
-    {
-        std::cout << "You re not in any channel right now !" << std::endl;
-        std::cout << "There is actually " << _server.getNbClient() << " client(s) in the server." << std::endl;
-    }
+        msg = "You re not in any channel right now !";
     else
     {
-        std::cout << "You are actually in the channel : " << _currChannel << std::endl;
-        std::cout << "there is actually " << _server.getNbClient() << " client(s) in this channel -> " << std::endl;
-    }
-    std::vector<std::string> tmp = _server.getLogin();
-    if (tmp.size() == 1) 
-        std::cout << "User : " << this->_name << std::endl;
-    else
-    {
-        for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); it++)
+        channel *curr = getChannelByName(_currChannel);
+        if (curr == NULL)
         {
-            std::cout << "User : " << *it << std::endl;
+            std::cerr << "Error on /who" << std::endl;
+            return ;
+        }
+        int nb = curr->getNbUser();
+        msg = "\nYou are actually in the channel : " + _currChannel + "\nThere is " + toStr(nb) + " client(s) in this channel -> \n";
+        std::vector<std::string> tmp = _server.getLogin();
+        if (tmp.size() == 1) 
+            msg += "User : " + this->_name;
+        else
+        {
+            
+            for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); it++)
+            {   
+                msg += "User : " + *it + "\n";
+            }
         }
     }
+    _server.sendMessage(_clientFd, "", msg);
 }
 
 void    user::list()
 {
+    std::string msg;
     if (_server.getNbChannel() == 0)
-        std::cout << "There is actually any channel in this server" << std::endl;
+        msg = "There is actually any channel in this server\n";
     else
-    {
-        std::cout << "There is actually " << _server.getNbChannel() << " channel(s)" << std::endl;
+    {      
+        msg = "There is actually : " + toStr(_server.getNbChannel()) + " channel(s) =>\n";
         for (int i = 1; i <= _server.getNbChannel(); i++)
         {
-            std::cout << _server.channelId[i]->getName() << std::endl;
+            std::string name = _server.channelId[i]->getName();
+            std::string nbs = toStr(_server.channelId[i]->getNbUser());
+            msg += name + " [ " + nbs + " users ]" + "\n";
         } 
     }
+    _server.sendMessage(_clientFd, "", msg);
 }
 bool    user::checkUserList()
 {
@@ -280,13 +343,27 @@ bool            user::getInChannel()
 {
     return (_inChannel);
 }
+
+bool            user::getOpChannel()
+{
+    return (_opChannel);
+}
+
+void        user::setOpchannel(bool op)
+{
+    _opChannel = op;
+}
 const char*     user::NotValidUserName::what() const throw()
 {
     return ("The username is not valid !");
 }
 
-
 const char*     user::NotValidNickName::what() const throw()
 {
     return ("The nickname is not valid !");
+}
+
+const char* user::NotValidChannelName::what() const throw()
+{
+    return ("The channel name is not valid\nUsage : ('#' | '&') <chstring>");
 }

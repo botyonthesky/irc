@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 17:21:53 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 14:20:47 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/05 19:04:42 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,12 +65,17 @@ void    client::sendMessage()
 void    client::receivedMessage()
 {
     char buffer[BUFSIZ];
-    _bytesRead = 1;
+    _bytesRead = 0;
     while (_bytesRead >= 0) 
     {
         _bytesRead = recv(_socketFd, buffer, BUFSIZ, 0);
         if (_bytesRead == -1)
             recvError();
+        else if (_bytesRead == 0)
+        {
+            std::cout << "Connection closed by peer." << std::endl;
+            break ;
+        }
         else 
         {
             buffer[_bytesRead] = '\0';

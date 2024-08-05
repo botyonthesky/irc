@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:18:47 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 17:46:52 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/05 17:05:25 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,6 @@ channel::channel(user * user, std::string name) : _nbUsers(0)
 {
     try
     {
-       if (!isValidChannelName(name))
-            throw NotValidChannelName();
         _name = name;
         _nbUsers++;
         _userN[_nbUsers] = user;
@@ -34,12 +32,7 @@ channel::channel(user * user, std::string name) : _nbUsers(0)
 channel::~channel()
 {
 }
-bool    channel::isValidChannelName(std::string name)
-{
-    if (name[0] == '&' || name[0] == '#')
-        return (true);
-    return (false);
-}
+
 std::string     channel::getName()
 {
     return (_name);
@@ -65,8 +58,4 @@ user*       channel::getUserN(int idx)
 void        channel::setNbUser(int x)
 {
     _nbUsers += x;
-}
-const char* channel::NotValidChannelName::what() const throw()
-{
-    return ("The channel name is not valid\nUsage : ('#' | '&') <chstring>");
 }
