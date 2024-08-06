@@ -13,16 +13,25 @@
 #include "../include/main.hpp"
 #include "../include/server.hpp"
 
-user::user(server& srv, int clientFd) : _server(srv), _clientFd(clientFd), _inChannel(false)
+user::user(server& srv, int clientFd, std::vector<std::string> command) : _server(srv), _clientFd(clientFd), _inChannel(false)
 {
     std::cout << "User construct" << std::endl;
-    std::ostringstream oss;
-    oss << "GuestN_" << clientFd;
-    _name = oss.str();
-    _opChannel = false;
-    _nickname = "undefined";
-    _currChannel = "No channel";
-    _server.setLogin(_name);
+    try
+    {
+        if (!isValidName(command[1]))
+            _server.sendMessage(clientFd, "IRC", "Not a valid username");
+        _username = command[1];
+        _name = command[4];
+        _opChannel = false;
+        _nickname = "";
+        _currChannel = "No channel";
+        _server.setLogin(_name);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    
 }
 
 user::~user()
@@ -32,9 +41,8 @@ user::~user()
 }
 
 
-bool    user::isValidName()
+bool    user::isValidName(std::string name)
 {
-    std::string name = _server.getCommand()[1];
     if (!isalpha(name[0]))
         return (false);
     return (true);
@@ -42,16 +50,25 @@ bool    user::isValidName()
 
 void    user::help()
 {
-    std::string msg = "\n/info                     display your information\n"
-                    "/nick [nick_name]         change your nickname\n"
-                    "/user [login]             change your login\n"
-                    "/join [channel]           join channel\n"
-                    "/leave                    leave current channel\n"
-                    "/quit                     quit irc\n"
-                    "/who                      list of users in current channel\n"
-                    "/msg [login] [msg]        submit msg to login\n"
-                    "/list                     list of channel\n"
-                    "[msg]                     send msg to current channel\n";
+    if (this->_opChannel)
+    {
+        std::string msg = "\nSpecific operator commands ->\n"
+                        "KICK [nick name] [channel]         eject an user of the channel\n"
+                        "INVITE [nick name] [channel]       invite an user to the channel\n"
+                        "TOPIC [channel] [subject]          define subject as the topic of the channel\n";
+        _server.sendMessage(_clientFd, "" , msg);
+    }
+    std::string msg = "Basic commands ->\n"
+                        "/info                              display your information\n"
+                        "/nick [nick name]                  change your nickname\n"
+                        "/user [login]                      change your login\n"
+                        "/join [channel]                    join channel\n"
+                        "/leave                             leave current channel\n"
+                        "/quit                              quit IRC\n"
+                        "/who                               list of users in current channel\n"
+                        "/msg [login] [msg]                 submit msg to login\n"
+                        "/list                              list of channel\n"
+                        "[msg]                              send msg to current channel\n";
 
     _server.sendMessage(this->_clientFd, "", msg);
 }
@@ -67,6 +84,19 @@ void    user::info()
     _server.sendMessage(this->_clientFd, "" , msg + channel);
 }
 
+void    user::speCommandOp()
+{
+    if (this->_opChannel)
+    {
+
+    }
+    else
+    {
+        _server.sendMessage(_clientFd, "IRC", "You're not operator inm this channel");
+    }
+}
+    
+
 
 
 void    user::leave()
@@ -81,9 +111,10 @@ void    user::leave()
         _server.decremChannelNbUser(_currChannel);
         _opChannel = false;
         _inChannel = false;
-        std::string msg = "You has leaved the channel : " + _currChannel + "\n";
+        std::string msg = "You left the channel : " + _currChannel;
+        g
         _server.sendMessage(_clientFd, "" , msg);
-        std::cout << _name << " has left channel : " << _currChannel << std::endl;
+        std::cout << _nickname << "  left channel : " << _currChannel << std::endl;
         _server.checkChannel(_currChannel);
         _currChannel = "No channel";
     }
@@ -93,7 +124,7 @@ void    user::nick()
 {
     try
     {
-        if (!isValidName())
+        if (!isValidName(_server.getCommand()[1]))
         {
             _server.sendMessage(_clientFd, "IRC", "Not valid nickname");
             throw NotValidNickName();
@@ -116,7 +147,7 @@ void   user::userName()
 {
     try
     {
-        if (!isValidName())
+        if (!isValidName(_server.getCommand()[1]))
         {
             _server.sendMessage(_clientFd, "IRC", "Not valid username");
             throw NotValidUserName();
@@ -180,7 +211,7 @@ void    user::join()
         {
             channel *newChannel = new channel(this, name);
             _inChannel = true;
-            std::cout << _name << " has created and join the channel : " << name << std::endl;
+            std::cout << _nickname << " has created and join the channel : " << name << std::endl;
             _currChannel = name;
             _opChannel = true;
             _server.setNbChannel(1);
@@ -193,7 +224,7 @@ void    user::join()
         else
         {
             _inChannel = true;
-            std::cout << _name << " has join the channel : " << _server.getCommand()[1] << std::endl;
+            std::cout << _nickname << " has join the channel : " << _server.getCommand()[1] << std::endl;
             _currChannel = _server.getCommand()[1];
             std::string msg = "Channel joined : " + _currChannel;
             _server.sendMessage(_clientFd, "", msg);
@@ -365,4 +396,9 @@ const char*     user::NotValidNickName::what() const throw()
 const char* user::NotValidChannelName::what() const throw()
 {
     return ("The channel name is not valid\nUsage : ('#' | '&') <chstring>");
+}
+
+void    user::setNickname(std::string nickname)
+{
+    _nickname = nickname;
 }

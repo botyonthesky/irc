@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:18:47 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/06 12:08:31 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/06 13:16:39 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,8 +18,6 @@ channel::channel(user * user, std::string name) : _nbUsers(0)
     {
         _name = name;
         _nbUsers++;
-        std::cout << "construct channel : " << std::endl;
-        std::cout << "nbUser " << _nbUsers << std::endl;
         _userN[_nbUsers] = user;
     }
     catch(const std::exception& e)
@@ -28,8 +26,6 @@ channel::channel(user * user, std::string name) : _nbUsers(0)
     }
     
 }
-
-
 
 channel::~channel()
 {

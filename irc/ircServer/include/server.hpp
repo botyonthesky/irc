@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/05 17:31:12 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/06 15:16:46 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,11 +63,16 @@ class server
         void    initPoll(void);
         
         void    waitingClient(void);
-        void    readingClient(int clientFD);
+        void    readingClient(int clientFd);
+        bool    manageUserInfo(int clientFd, std::string input);
+        void    manageUser(int clientFd, std::vector<std::string> command);
+        void    manageNick(int clientFd, std::string command);
+        void    readingInfo(int clientFd);
+        void    infoRequired(int clientFd);
         void    handleClient(int clientFd);
         void    infoClient(int i);
 
-        
+        user*   getUserByFd(int clientFd); 
         void    onlyOne(user * user, std::string input);
         void    manageMsg(int clientFd, std::string input);
         void    sendMessage(int clientFd, std::string from, std::string message);

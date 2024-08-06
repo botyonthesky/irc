@@ -238,7 +238,7 @@ void    server::printChannelInfo()
 void    server::msgToCurrent(user * user, std::string input)
 {
     if (!user->getInChannel())
-        std::cout << "Currently you aren't in any channel ! " << std::endl;
+        sendMessage(user->getClientFd(), "IRC", "Currently you aren't in any channel !");
     else
     {
         std::string channelName = user->getCurrChannel();
@@ -248,14 +248,17 @@ void    server::msgToCurrent(user * user, std::string input)
 }
 void    server::findUser(channel * channel, user * user, std::string input)
 {
-    for (int i = 1; i <= channel->getNbUser(); i++)
+    std::cout << "find user " << std::endl;
+    int i = 1;
+    while (i <= channel->getNbUser())
     {
         if (channel->getUserN(i) == user)
             i++;
         else
         {
-            std::string from = user->getName();
+            std::string from = user->getNick();
             sendMessage(channel->getUserN(i)->getClientFd(), from, input);
+            i++;
         }
     }
 }
@@ -353,22 +356,119 @@ void    server::readingClient(int clientFd)
         manageMsg(clientFd, input);
     }
 }
+void    server::infoRequired(int clientFd)
+{
+    std::string info;
+    sendMessage(clientFd, "IRC", "Usage : USER [username] [hostname(unused)] [servername(unused)] [realname]\n              NICK [nickname]");
+    readingInfo(clientFd);
+}
+void    server::readingInfo(int clientFd)
+{
+    char buff[BUFSIZ] = {0};
+    _bytesRead = recv(clientFd, buff, BUFSIZ - 1, 0);
+    std::string input = buff;
+    if (_bytesRead == -1)    
+    {
+        initError ex("recv");
+        throw ex;
+    }
+    else if (_bytesRead == 0)
+    {
+        close(clientFd);
+        for (size_t i = 0; i < _pollFds.size(); i++)
+        {
+            if (_pollFds[i].fd == clientFd)
+            {
+                _pollFds.erase(_pollFds.begin() + i);
+                break;
+            }
+        }
+        for (int i = 1; i <= _nbClient; i++)
+        {
+            if (_userN[i]->getClientFd() == clientFd)
+            {
+                delete _userN[i];
+                for(int j = i; j < _nbClient - 1; j++)
+                    _userN[j] = _userN[j + 1];
+                _nbClient--;
+                break;
+            }
+        }
+    }
+    else
+    {
+        buff[_bytesRead] = '\0';
+        std::string input(buff);
+        if (!manageUserInfo(clientFd, input))
+            infoRequired(clientFd);
+        else if (getUserByFd(clientFd) != NULL && getUserByFd(clientFd)->getNick().empty())
+            infoRequired(clientFd);
+        else
+        {
+            printInfoNewUser(getUserByFd(clientFd));   
+            infoClient(_nbClient); 
+        }
+    }
+}
+bool    server::manageUserInfo(int clientFd, std::string input)
+{
+    input = trim_and_reduce_spaces(input);
+    size_t start = 0;
+    size_t end = input.find(" ");
+    std::vector<std::string> command;
+    while (end != std::string::npos)
+    {
+        command.push_back(input.substr(start, end - start));
+        start = end + 1;
+        end = input.find(" ", start);
+    }
+    command.push_back(input.substr(start));
+    if (command.size() != 5 && command.size() != 2)  
+        return (false);
+    else if (command[0] == "USER")
+    {
+        manageUser(clientFd, command);    
+        return (true);
+    }
+    else if (command[0] == "NICK")
+    {
+        manageNick(clientFd, command[1]);
+        return (true);
+    }
+    else
+        return (false);
+}
+void    server::manageUser(int clientFd, std::vector<std::string> command) 
+{
+    user *newUser = new user(*this, clientFd, command);
+    newUser->setIdx(_nbClient);
+    _userN[_nbClient] = newUser;
+}
 
+user*  server::getUserByFd(int clientFd)
+{
+    for (int i = 1; i <= _nbClient; i++)
+    {
+        if (_userN[i]->getClientFd() == clientFd)
+            return (_userN[i]);
+    }
+    return (NULL);
+}
+
+void    server::manageNick(int clientFd, std::string command)
+{
+    getUserByFd(clientFd)->setNickname(command);
+}
 void    server::handleClient(int clientFd)
 {
     _nbClient++;
-    std::cout << "nb client " << _nbClient << std::endl;
     if (_nbClient >= MAXCLIENT)
     {
         std::cerr << "Max client reach" << std::endl;
         return ;
     }
     _clientFd = clientFd;
-    user *newUser = new user(*this, clientFd);
-    printInfoNewUser(newUser);
-    newUser->setIdx(_nbClient);
-    _userN[_nbClient] = newUser;
-    infoClient(_nbClient);    
+    infoRequired(clientFd);
 }
 
 void    server::infoClient(int i)
@@ -377,7 +477,8 @@ void    server::infoClient(int i)
     std::string format = "$> ";
     std::string format2 = " ------IRC------[";
     std::string format3 = "]------>";
-    info = format + _userN[i]->getName() + format2
+
+    info = format + _userN[i]->getNick() + format2
     + _userN[i]->getCurrChannel() + format3;
     int msgSize = info.size();
     int byteS = send(_userN[i]->getClientFd(), info.c_str(), msgSize, 0);

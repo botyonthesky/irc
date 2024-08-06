@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/05 18:10:11 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/06 15:22:32 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,24 +22,25 @@ class user
 {
     private:
 
-                server&             _server;
-                int                 _clientFd;
-                bool                _inChannel;
-                int                 _idx;
-                std::string         _name;
-                std::string         _nickname;
-                std::string         _currChannel;
-                bool                _opChannel;
+                server&                 _server;
+                int                     _clientFd;
+                bool                    _inChannel;
+                int                     _idx;
+                std::string             _name;
+                std::string             _username;
+                std::string             _nickname;
+                std::string             _currChannel;
+                bool                    _opChannel;
                 
 
     public:
 
-                user(server & srv, int clientFD);
+                user(server & srv, int clientFd, std::vector<std::string> command);
                 ~user();
 
 
 
-                bool            isValidName(void);
+                bool            isValidName(std::string name);
                 bool            isValidChannelName(std::string name);
                 bool            checkUserList(void);
                 bool            checkChannel(void);
@@ -56,6 +57,8 @@ class user
                 void            quit(void);
                 void            help(void);
                 void            leave(void);
+
+                void            speCommandOp(void);
                 
                 int             getClientFd(void);
                 int             getIdx(void);
@@ -67,6 +70,7 @@ class user
 
                 void            setIdx(int idx);
                 void            setOpchannel(bool op);
+                void            setNickname(std::string nickname);
                 void            registerChannel(std::string name, channel * channel);
                 
                 channel*        channelUser[MAXCHANNEL];
