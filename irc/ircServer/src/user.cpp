@@ -141,10 +141,7 @@ int    user::checkChannel2()
     for (int i = 1; i <= _server.getNbChannel(); i++)
     {
         if (_server.getCommand()[1] == _server.channelId[i]->getName())
-        {
-            // std::cout << "serveridx : " << _server.channelId[i]->getIdx() << std::endl;
             return (_server.channelId[i]->getIdx());
-        }
     }
     return (-1);
 }
@@ -189,7 +186,7 @@ void    user::join()
             _server.setNbChannel(1);
             newChannel->setIdx(_server.getNbChannel());
             _server.channelId[newChannel->getIdx()] = newChannel;
-            std::string msg = "Channel created and joined : " + _currChannel + "\n";
+            std::string msg = "Channel created and joined : " + _currChannel;
             _server.sendMessage(_clientFd, "" , msg);
             registerChannel(name, newChannel);
         }
@@ -202,6 +199,9 @@ void    user::join()
             _server.sendMessage(_clientFd, "", msg);
             _server.channelId[checkChannel2()]->setNbUser(1);
             registerChannel(name, _server.channelId[checkChannel2()]);
+            channel * curr = getChannelByName(name);
+            int idx = _server.channelId[checkChannel2()]->getNbUser();
+            curr->setUserN(this, idx);
         }
     }
     catch(const std::exception& e)
@@ -297,7 +297,6 @@ void    user::list()
 }
 bool    user::checkUserList()
 {
-    // std::cout << " check user list " << std::endl;
     std::vector<std::string> tmp = _server.getLogin();
     if (tmp.size() == 1)
         return (false);
