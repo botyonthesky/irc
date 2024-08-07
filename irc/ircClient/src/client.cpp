@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 17:21:53 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/05 19:04:42 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/07 15:02:23 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ void    client::connectServer()
     _status = connect(_socketFd, (struct sockaddr *)&_sa, sizeof(_sa));
     if (_status != 0)
         connectError();
-    std::cout << "Connected to localhost, PORT : " << PORT << std::endl;
+    std::cout << "PORT : " << PORT << ", connecting to localhost..." << std::endl;
 }
 
 void   client::handleMessage(void)

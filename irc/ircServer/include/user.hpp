@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/06 15:22:32 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/07 14:42:09 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ class user
                 std::string             _nickname;
                 std::string             _currChannel;
                 bool                    _opChannel;
-                
+                bool                    _clientRegister;
 
     public:
 
@@ -43,8 +43,7 @@ class user
                 bool            isValidName(std::string name);
                 bool            isValidChannelName(std::string name);
                 bool            checkUserList(void);
-                bool            checkChannel(void);
-                int             checkChannel2(void);
+                int             checkChannel(void);
 
                 void            userName(void);
                 void            join(void);
@@ -76,7 +75,8 @@ class user
                 channel*        channelUser[MAXCHANNEL];
                 channel*        getChannelByIdx(int idx);
                 channel*        getChannelByName(std::string name); 
-
+                void            createNewChannel(std::string name);
+                void            joinChannel(std::string name);
 
                 class NotValidUserName : public std::exception
                 {

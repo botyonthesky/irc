@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:16:40 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/06 12:08:18 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/06 16:30:30 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@ class channel
         void            setIdx(int idx);
         void            setNbUser(int x);
         void            setUserN(user * user, int idx);
+        void            delUserN(int idx);
         
 
         

@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:18:47 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/06 13:16:39 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/06 16:30:46 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,4 +61,9 @@ void        channel::setNbUser(int x)
 void        channel::setUserN(user * user, int idx)
 {
     _userN[idx] = user;
+}
+
+void        channel::delUserN(int idx)
+{
+    delete _userN[idx];
 }

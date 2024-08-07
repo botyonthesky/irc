@@ -315,52 +315,28 @@ void    server::parsingMsg(user * user, std::string input)
     else
         onlyOne(user, input);
 }
-
-void    server::readingClient(int clientFd)
+void    server::closeFd(int clientFd)
 {
-    char buff[BUFSIZ] = {0};
-    _bytesRead = recv(clientFd, buff, BUFSIZ - 1, 0);
-    std::string input = buff;
-    if (_bytesRead == -1)    
+    close(clientFd);
+    for (size_t i = 0; i < _pollFds.size(); i++)
     {
-        initError ex("recv");
-        throw ex;
-    }
-    else if (_bytesRead == 0)
-    {
-        close(clientFd);
-        for (size_t i = 0; i < _pollFds.size(); i++)
+        if (_pollFds[i].fd == clientFd)
         {
-            if (_pollFds[i].fd == clientFd)
-            {
-                _pollFds.erase(_pollFds.begin() + i);
-                break;
-            }
-        }
-        for (int i = 1; i <= _nbClient; i++)
-        {
-            if (_userN[i]->getClientFd() == clientFd)
-            {
-                delete _userN[i];
-                for(int j = i; j < _nbClient - 1; j++)
-                    _userN[j] = _userN[j + 1];
-                _nbClient--;
-                break;
-            }
+            _pollFds.erase(_pollFds.begin() + i);
+            break;
         }
     }
-    else
+    for (int i = 1; i <= _nbClient; i++)
     {
-        buff[_bytesRead] = '\0';
-        std::string input(buff);
-        manageMsg(clientFd, input);
+        if (_userN[i]->getClientFd() == clientFd)
+        {
+            delete _userN[i];
+            for(int j = i; j < _nbClient - 1; j++)
+                _userN[j] = _userN[j + 1];
+            _nbClient--;
+            break;
+        }
     }
-}
-void    server::infoRequired(int clientFd)
-{
-    std::string info;
-    sendMessage(clientFd, "IRC", "Usage : USER [username] [hostname(unused)] [servername(unused)] [realname]\n              NICK [nickname]");
-    readingInfo(clientFd);
 }
 void    server::readingInfo(int clientFd)
 {
@@ -373,43 +349,62 @@ void    server::readingInfo(int clientFd)
         throw ex;
     }
     else if (_bytesRead == 0)
-    {
-        close(clientFd);
-        for (size_t i = 0; i < _pollFds.size(); i++)
-        {
-            if (_pollFds[i].fd == clientFd)
-            {
-                _pollFds.erase(_pollFds.begin() + i);
-                break;
-            }
-        }
-        for (int i = 1; i <= _nbClient; i++)
-        {
-            if (_userN[i]->getClientFd() == clientFd)
-            {
-                delete _userN[i];
-                for(int j = i; j < _nbClient - 1; j++)
-                    _userN[j] = _userN[j + 1];
-                _nbClient--;
-                break;
-            }
-        }
-    }
+        closeFd(clientFd);
     else
     {
         buff[_bytesRead] = '\0';
         std::string input(buff);
+        receptInfo(input, clientFd);
+    }
+}
+void    server::readingClient(int clientFd)
+{
+    char buff[BUFSIZ] = {0};
+    _bytesRead = recv(clientFd, buff, BUFSIZ - 1, 0);
+    std::string input = buff;
+    if (_bytesRead == -1)    
+    {
+        initError ex("recv");
+        throw ex;
+    }
+    else if (_bytesRead == 0)
+        closeFd(clientFd);
+    else
+    {
+        buff[_bytesRead] = '\0';
+        std::string input(buff);
+        manageMsg(clientFd, input);
+    }
+}
+void    server::receptInfo(std::string input, int clientFd)
+{
+    if (input == "HELP")
+        sendMessage(clientFd, "IRC", "USER [username] [hostname(unused)] [servername(unused)] [realname]\n      NICK [nickname]");
+    else
+    {
         if (!manageUserInfo(clientFd, input))
             infoRequired(clientFd);
         else if (getUserByFd(clientFd) != NULL && getUserByFd(clientFd)->getNick().empty())
             infoRequired(clientFd);
         else
         {
+            sendMessage(clientFd, "IRC", "Welcome !");
             printInfoNewUser(getUserByFd(clientFd));   
             infoClient(_nbClient); 
         }
     }
 }
+
+
+void    server::infoRequired(int clientFd)
+{
+    if (!getUserByFd(clientFd))
+        sendMessage(clientFd, "Connected !\nIRC", "USER Info Required : USER and NICK (type HELP for usage)");
+    else if (getUserByFd(clientFd)->getNick().empty())
+        sendMessage(clientFd, "IRC", "USER Info required : NICK");
+    readingInfo(clientFd);
+}
+
 bool    server::manageUserInfo(int clientFd, std::string input)
 {
     input = trim_and_reduce_spaces(input);
@@ -427,12 +422,14 @@ bool    server::manageUserInfo(int clientFd, std::string input)
         return (false);
     else if (command[0] == "USER")
     {
-        manageUser(clientFd, command);    
+        manageUser(clientFd, command);
+        sendMessage(clientFd, "IRC", "USER register"); 
         return (true);
     }
     else if (command[0] == "NICK")
     {
         manageNick(clientFd, command[1]);
+        sendMessage(clientFd, "IRC", "NICKNAME register"); 
         return (true);
     }
     else
@@ -441,6 +438,7 @@ bool    server::manageUserInfo(int clientFd, std::string input)
 void    server::manageUser(int clientFd, std::vector<std::string> command) 
 {
     user *newUser = new user(*this, clientFd, command);
+    _nbClient++;
     newUser->setIdx(_nbClient);
     _userN[_nbClient] = newUser;
 }
@@ -461,7 +459,6 @@ void    server::manageNick(int clientFd, std::string command)
 }
 void    server::handleClient(int clientFd)
 {
-    _nbClient++;
     if (_nbClient >= MAXCLIENT)
     {
         std::cerr << "Max client reach" << std::endl;
@@ -561,14 +558,11 @@ void    server::waitingClient()
                     handleClient(_clientFd);
                 }
                 else
-                {
                     readingClient(_pollFds[i].fd);
-                }
             }
         }
     }
 }
-
 
 void    server::delUserList(user * user)
 {
@@ -698,3 +692,102 @@ void    server::setNbChannel(int i)
 {
     _nbChannel += i;
 }
+
+
+// void    server::readingClient(int clientFd)
+// {
+//     char buff[BUFSIZ] = {0};
+//     _bytesRead = recv(clientFd, buff, BUFSIZ - 1, 0);
+//     std::string input = buff;
+//     if (_bytesRead == -1)    
+//     {
+//         initError ex("recv");
+//         throw ex;
+//     }
+//     else if (_bytesRead == 0)
+//     {
+//         close(clientFd);
+//         for (size_t i = 0; i < _pollFds.size(); i++)
+//         {
+//             if (_pollFds[i].fd == clientFd)
+//             {
+//                 _pollFds.erase(_pollFds.begin() + i);
+//                 break;
+//             }
+//         }
+//         for (int i = 1; i <= _nbClient; i++)
+//         {
+//             if (_userN[i]->getClientFd() == clientFd)
+//             {
+//                 delete _userN[i];
+//                 for(int j = i; j < _nbClient - 1; j++)
+//                     _userN[j] = _userN[j + 1];
+//                 _nbClient--;
+//                 break;
+//             }
+//         }
+//     }
+//     else
+//     {
+//         buff[_bytesRead] = '\0';
+//         std::string input(buff);
+//         manageMsg(clientFd, input);
+//     }
+// }
+// void    server::readingInfo(int clientFd)
+// {
+//     char buff[BUFSIZ] = {0};
+//     _bytesRead = recv(clientFd, buff, BUFSIZ - 1, 0);
+//     std::string input = buff;
+//     if (_bytesRead == -1)    
+//     {
+//         initError ex("recv");
+//         throw ex;
+//     }
+//     else if (_bytesRead == 0)
+//     {
+//         close(clientFd);
+//         for (size_t i = 0; i < _pollFds.size(); i++)
+//         {
+//             if (_pollFds[i].fd == clientFd)
+//             {
+//                 _pollFds.erase(_pollFds.begin() + i);
+//                 break;
+//             }
+//         }
+//         for (int i = 1; i <= _nbClient; i++)
+//         {
+//             if (_userN[i]->getClientFd() == clientFd)
+//             {
+//                 delete _userN[i];
+//                 for(int j = i; j < _nbClient - 1; j++)
+//                     _userN[j] = _userN[j + 1];
+//                 _nbClient--;
+//                 break;
+//             }
+//         }
+//     }
+//     else
+//     {
+//         buff[_bytesRead] = '\0';
+//         std::string input(buff);
+//         if (input == "HELP")
+//         {
+//             sendMessage(clientFd, "IRC", "USER [username] [hostname(unused)] [servername(unused)] [realname]\n      NICK [nickname]");
+//             readingInfo(clientFd);
+//         }
+//         else
+//         {
+//             if (!manageUserInfo(clientFd, input))
+//                 infoRequired(clientFd);
+//             else if (getUserByFd(clientFd) != NULL && getUserByFd(clientFd)->getNick().empty())
+//                 infoRequired(clientFd);
+//             else
+//             {
+//                 sendMessage(clientFd, "IRC", "Welcome !");
+//                 printInfoNewUser(getUserByFd(clientFd));   
+//                 infoClient(_nbClient); 
+//             }
+//         }
+//     }
+// }

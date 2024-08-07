@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/06 15:16:46 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/07 14:54:49 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,10 +40,12 @@ class server
         user*                       _userN[MAXCLIENT];
         std::vector<std::string>    _loginClient;
         std::string                 _nickClient[MAXCLIENT];
+
         
         // channel*                    _channel[MAXCHANNEL];
         std::string                 _channelName[MAXCHANNEL];
         int                         _nbChannel;
+
         
         std::vector<std::string>    _command; 
 
@@ -61,16 +63,19 @@ class server
         void    initBind(void);
         void    initListen(void);
         void    initPoll(void);
-        
+
+        void    closeFd(int clientFd);
+        void    recepMsg(std::string input, int clientFd, bool info);
         void    waitingClient(void);
         void    readingClient(int clientFd);
         bool    manageUserInfo(int clientFd, std::string input);
         void    manageUser(int clientFd, std::vector<std::string> command);
         void    manageNick(int clientFd, std::string command);
-        void    readingInfo(int clientFd);
         void    infoRequired(int clientFd);
         void    handleClient(int clientFd);
         void    infoClient(int i);
+        void    receptInfo(std::string input, int clientFd);
+        void    readingInfo(int clientFd);
 
         user*   getUserByFd(int clientFd); 
         void    onlyOne(user * user, std::string input);
@@ -96,6 +101,7 @@ class server
         void    printInfoUsers(void);
 
 
+
         void                        checkChannel(std::string currChannel);        
         void                        printChannelInfo(void);
         void                        decremChannelNbUser(std::string currChannel);
@@ -106,12 +112,9 @@ class server
         int                         getNbChannel(void);
         std::vector<std::string>    getCommand(void);
         std::vector<std::string>    getLogin(void);
-        // channel*                    getChannel(int idx);
 
         void                        setLogin(std::string login);
         void                        setNbChannel(int nb);
-        // void                        setChannel(channel * channel, int idx);
-
 
         std::string                 loginClient[MAXCLIENT];
         

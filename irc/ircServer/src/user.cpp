@@ -25,7 +25,7 @@ user::user(server& srv, int clientFd, std::vector<std::string> command) : _serve
         _opChannel = false;
         _nickname = "";
         _currChannel = "No channel";
-        _server.setLogin(_name);
+        _server.setLogin(_username);
     }
     catch(const std::exception& e)
     {
@@ -37,7 +37,7 @@ user::user(server& srv, int clientFd, std::vector<std::string> command) : _serve
 user::~user()
 {
     _server.delUserList(this);
-    std::cout << this->_name << " has quit the server" << std::endl;
+    std::cout << this->_username << " has quit the server" << std::endl;
 }
 
 
@@ -75,12 +75,12 @@ void    user::help()
 
 void    user::info()
 {
-    std::string msg = "\nYour user name is : " + _name + ", your nick name is : "+ _nickname;
+    std::string msg = "\nYour user name is : " + _username + ", your nick name is : "+ _nickname;
     std::string channel;
     if (!_inChannel)
         channel = "\nYou re not in any channel right now !\n";
     else
-        channel = "\nYou re in the channel : " + _currChannel + "\n"; 
+        channel = "\nYou re in the channel : " + _currChannel;
     _server.sendMessage(this->_clientFd, "" , msg + channel);
 }
 
@@ -108,11 +108,11 @@ void    user::leave()
     }
     else
     {
+        getChannelByName(_currChannel)->delUserN(this->getIdx());
         _server.decremChannelNbUser(_currChannel);
         _opChannel = false;
         _inChannel = false;
         std::string msg = "You left the channel : " + _currChannel;
-        g
         _server.sendMessage(_clientFd, "" , msg);
         std::cout << _nickname << "  left channel : " << _currChannel << std::endl;
         _server.checkChannel(_currChannel);
@@ -134,7 +134,7 @@ void    user::nick()
         std::string msg = "Your nickname was : " + oldNick + " its now : " + newNick;
         _nickname = newNick;
         _server.sendMessage(this->_clientFd, "", msg);
-        std::cout << _name << " has changed his nickname to : " << _nickname << std::endl;
+        std::cout << _username << " has changed his nickname to : " << _nickname << std::endl;
     }
     catch(const std::exception& e)
     {
@@ -153,9 +153,9 @@ void   user::userName()
             throw NotValidUserName();
         }
         std::string newName = _server.getCommand()[1];
-        std::string oldName = _name;
+        std::string oldName = _username;
         _server.updateLoginList(oldName, newName);
-        _name = newName;
+        _username = newName;
         std::string msg = "You username was : " + oldName + ", it's now : " + newName;
         _server.sendMessage(this->_clientFd, "", msg);
         std::cout << oldName << " has changed his username to : " << newName << std::endl;
@@ -166,7 +166,7 @@ void   user::userName()
     }
 }
 
-int    user::checkChannel2()
+int    user::checkChannel()
 {
     
     for (int i = 1; i <= _server.getNbChannel(); i++)
@@ -176,16 +176,7 @@ int    user::checkChannel2()
     }
     return (-1);
 }
-bool    user::checkChannel()
-{
-    
-    for (int i = 1; i <= _server.getNbChannel(); i++)
-    {
-        if (_server.getCommand()[1] == _server.channelId[i]->getName())
-            return (false);
-    }
-    return (true);
-}
+
 
 void    user::registerChannel(std::string name, channel * channel)
 {
@@ -196,7 +187,34 @@ void    user::registerChannel(std::string name, channel * channel)
             channelUser[i] = channel;
     }
 }
+void    user::createNewChannel(std::string name)
+{
+    channel *newChannel = new channel(this, name);
+    _inChannel = true;
+    std::cout << _nickname << " has created and join the channel : " << name << std::endl;
+    _currChannel = name;
+    _opChannel = true;
+    _server.setNbChannel(1);
+    newChannel->setIdx(_server.getNbChannel());
+    _server.channelId[newChannel->getIdx()] = newChannel;
+    std::string msg = "Channel created and joined : " + _currChannel;
+    _server.sendMessage(_clientFd, "" , msg);
+    registerChannel(name, newChannel);
+}
 
+void    user::joinChannel(std::string name)
+{
+    _inChannel = true;
+    std::cout << _nickname << " has join the channel : " << _server.getCommand()[1] << std::endl;
+    _currChannel = _server.getCommand()[1];
+    std::string msg = "Channel joined : " + _currChannel;
+    _server.sendMessage(_clientFd, "", msg);
+    _server.channelId[checkChannel()]->setNbUser(1);
+    registerChannel(name, _server.channelId[checkChannel()]);
+    channel * curr = getChannelByName(name);
+    int idx = _server.channelId[checkChannel()]->getNbUser();
+    curr->setUserN(this, idx);
+}
 void    user::join()
 {
     std::string name = _server.getCommand()[1];
@@ -207,32 +225,34 @@ void    user::join()
             _server.sendMessage(_clientFd, "IRC" , "Not valid Channel name\nUsage : ('#' | '&') <chstring>");
             throw NotValidChannelName();
         }
-        if (checkChannel2() == -1)
+        if (checkChannel() == -1)
         {
-            channel *newChannel = new channel(this, name);
-            _inChannel = true;
-            std::cout << _nickname << " has created and join the channel : " << name << std::endl;
-            _currChannel = name;
-            _opChannel = true;
-            _server.setNbChannel(1);
-            newChannel->setIdx(_server.getNbChannel());
-            _server.channelId[newChannel->getIdx()] = newChannel;
-            std::string msg = "Channel created and joined : " + _currChannel;
-            _server.sendMessage(_clientFd, "" , msg);
-            registerChannel(name, newChannel);
+            createNewChannel(name);
+            // channel *newChannel = new channel(this, name);
+            // _inChannel = true;
+            // std::cout << _nickname << " has created and join the channel : " << name << std::endl;
+            // _currChannel = name;
+            // _opChannel = true;
+            // _server.setNbChannel(1);
+            // newChannel->setIdx(_server.getNbChannel());
+            // _server.channelId[newChannel->getIdx()] = newChannel;
+            // std::string msg = "Channel created and joined : " + _currChannel;
+            // _server.sendMessage(_clientFd, "" , msg);
+            // registerChannel(name, newChannel);
         }
         else
         {
-            _inChannel = true;
-            std::cout << _nickname << " has join the channel : " << _server.getCommand()[1] << std::endl;
-            _currChannel = _server.getCommand()[1];
-            std::string msg = "Channel joined : " + _currChannel;
-            _server.sendMessage(_clientFd, "", msg);
-            _server.channelId[checkChannel2()]->setNbUser(1);
-            registerChannel(name, _server.channelId[checkChannel2()]);
-            channel * curr = getChannelByName(name);
-            int idx = _server.channelId[checkChannel2()]->getNbUser();
-            curr->setUserN(this, idx);
+            joinChannel(name);
+            // _inChannel = true;
+            // std::cout << _nickname << " has join the channel : " << _server.getCommand()[1] << std::endl;
+            // _currChannel = _server.getCommand()[1];
+            // std::string msg = "Channel joined : " + _currChannel;
+            // _server.sendMessage(_clientFd, "", msg);
+            // _server.channelId[checkChannel()]->setNbUser(1);
+            // registerChannel(name, _server.channelId[checkChannel()]);
+            // channel * curr = getChannelByName(name);
+            // int idx = _server.channelId[checkChannel()]->getNbUser();
+            // curr->setUserN(this, idx);
         }
     }
     catch(const std::exception& e)
@@ -263,24 +283,8 @@ void    user::msg()
     }
 }
 
-channel*    user::getChannelByIdx(int idx)
-{
-    return (channelUser[idx]);
-}
-
-channel*     user::getChannelByName(std::string name)
-{
-    for (int i = 1; i <= _server.getNbChannel(); i++)
-    {
-        if (_server.channelId[i]->getName() == name)
-            return (channelUser[i]);
-    }
-    return (NULL);
-}
-
 void    user::who()
 {
-    
     std::string msg;
     if (!_inChannel)
         msg = "You re not in any channel right now !";
@@ -296,7 +300,7 @@ void    user::who()
         msg = "\nYou are actually in the channel : " + _currChannel + "\nThere is " + toStr(nb) + " client(s) in this channel -> \n";
         std::vector<std::string> tmp = _server.getLogin();
         if (tmp.size() == 1) 
-            msg += "User : " + this->_name;
+            msg += "User : " + this->_username;
         else
         {
             
@@ -358,7 +362,7 @@ void        user::setIdx(int idx)
 
 std::string     user::getName(void)
 {
-    return (_name);
+    return (_username);
 }
 
 std::string     user::getNick(void)
@@ -383,6 +387,24 @@ void        user::setOpchannel(bool op)
 {
     _opChannel = op;
 }
+channel*    user::getChannelByIdx(int idx)
+{
+    return (channelUser[idx]);
+}
+
+channel*     user::getChannelByName(std::string name)
+{
+    for (int i = 1; i <= _server.getNbChannel(); i++)
+    {
+        if (_server.channelId[i]->getName() == name)
+            return (channelUser[i]);
+    }
+    return (NULL);
+}
+void    user::setNickname(std::string nickname)
+{
+    _nickname = nickname;
+}
 const char*     user::NotValidUserName::what() const throw()
 {
     return ("The username is not valid !");
@@ -398,7 +420,3 @@ const char* user::NotValidChannelName::what() const throw()
     return ("The channel name is not valid\nUsage : ('#' | '&') <chstring>");
 }
 
-void    user::setNickname(std::string nickname)
-{
-    _nickname = nickname;
-}
