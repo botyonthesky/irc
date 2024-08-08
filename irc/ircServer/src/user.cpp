@@ -21,7 +21,7 @@ user::user(server& srv, int clientFd, std::vector<std::string> command) : _serve
         if (!isValidName(command[1]))
             _server.sendMessage(clientFd, "IRC", "Not a valid username");
         _username = command[1];
-        _name = command[4];
+        _realName = command[4];
         _nickname = "";
         _currChannel = "No channel";
         _server.setLogin(_username);
@@ -41,6 +41,11 @@ user::~user()
 
 bool    user::isValidName(std::string name)
 {
+    for (std::vector<std::string>::iterator it = _server.getLogin().begin(); it != _server.getLogin().end(); it++)
+    {
+        if (*it == name)
+            return (false);
+    }
     if (!isalpha(name[0]))
         return (false);
     return (true);
@@ -427,7 +432,7 @@ void        user::decrementIdx()
     _idx--;
 }
 
-std::string     user::getName(void)
+std::string     user::getUsername(void)
 {
     return (_username);
 }

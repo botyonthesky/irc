@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/08 15:25:02 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/08 17:38:07 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ class user
                 int                     _clientFd;
                 bool                    _inChannel;
                 int                     _idx;
-                std::string             _name;
+                std::string             _realName;
                 std::string             _username;
                 std::string             _nickname;
                 std::string             _currChannel;
@@ -65,7 +65,7 @@ class user
                 
                 int             getClientFd(void);
                 int             getIdx(void);
-                std::string     getName(void);
+                std::string     getUsername(void);
                 std::string     getNick(void);
                 std::string     getCurrChannel(void);
                 bool            getInChannel(void);

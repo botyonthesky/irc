@@ -84,7 +84,7 @@ void    server::initPoll()
 }
 void    server::quit(user * user)
 {
-    std::cout << "Now closing client : " << user->getName() << std::endl;
+    std::cout << "Now closing client : " << user->getUsername() << std::endl;
     close(user->getClientFd());
     for (size_t i = 0; i < _pollFds.size(); i++)
         {
@@ -359,25 +359,7 @@ void    server::closeFd(int clientFd)
         }
     }
 }
-void    server::readingInfo(int clientFd)
-{
-    char buff[BUFSIZ] = {0};
-    _bytesRead = recv(clientFd, buff, BUFSIZ - 1, 0);
-    std::string input = buff;
-    if (_bytesRead == -1)    
-    {
-        initError ex("recv");
-        throw ex;
-    }
-    else if (_bytesRead == 0)
-        closeFd(clientFd);
-    else
-    {
-        buff[_bytesRead] = '\0';
-        std::string input(buff);
-        receptInfo(input, clientFd);
-    }
-}
+
 void    server::readingClient(int clientFd)
 {
     char buff[BUFSIZ] = {0};
@@ -394,7 +376,18 @@ void    server::readingClient(int clientFd)
     {
         buff[_bytesRead] = '\0';
         std::string input(buff);
-        manageMsg(clientFd, input);
+        if (!getUserByFd(clientFd))
+        {
+            sendMessage(clientFd, "Connected !\nIRC", "USER Info Required : USER and NICK (type HELP for usage)");
+            receptInfo(input, clientFd);
+        }
+        else if (getUserByFd(clientFd)->getNick().empty())
+        {
+            sendMessage(clientFd, "IRC", "USER Info required : NICK");
+            receptInfo(input, clientFd);
+        }
+        else
+            manageMsg(clientFd, input);
     }
 }
 void    server::receptInfo(std::string input, int clientFd)
@@ -416,14 +409,12 @@ void    server::receptInfo(std::string input, int clientFd)
     }
 }
 
-
 void    server::infoRequired(int clientFd)
 {
     if (!getUserByFd(clientFd))
         sendMessage(clientFd, "Connected !\nIRC", "USER Info Required : USER and NICK (type HELP for usage)");
     else if (getUserByFd(clientFd)->getNick().empty())
         sendMessage(clientFd, "IRC", "USER Info required : NICK");
-    readingInfo(clientFd);
 }
 
 bool    server::manageUserInfo(int clientFd, std::string input)
@@ -485,6 +476,10 @@ void    server::handleClient(int clientFd)
         std::cerr << "Max client reach" << std::endl;
         return ;
     }
+    struct pollfd clientPollFd;
+    clientPollFd.fd = _clientFd;
+    clientPollFd.events = POLLIN;
+    _pollFds.push_back(clientPollFd);
     _clientFd = clientFd;
     infoRequired(clientFd);
 }
@@ -571,10 +566,6 @@ void    server::waitingClient()
                         initError ex("accept");
                         throw ex;
                     }
-                    struct pollfd clientPollFd;
-                    clientPollFd.fd = _clientFd;
-                    clientPollFd.events = POLLIN;
-                    _pollFds.push_back(clientPollFd);
                     std::cout << "New client connected, fd : " << _clientFd << std::endl;
                     handleClient(_clientFd);
                 }
@@ -593,7 +584,7 @@ void    server::delUserList(user * user)
     {
         for (std::vector<std::string>::iterator it = _loginClient.begin(); it != _loginClient.end(); it++)
         {
-            if (*it == user->getName())
+            if (*it == user->getUsername())
             {
                 _loginClient.erase(it);
                 break;
@@ -654,7 +645,7 @@ void   server::printInfoNewUser(user *user)
 {
     std::cout << "there is a new client -> " << std::endl;
     std::cout << "Socket client : " <<  user->getClientFd() << std::endl
-            << "Login client : "  << user->getName() << std::endl 
+            << "Login client : "  << user->getUsername() << std::endl 
             << "Nickname client : " << user->getNick() << std::endl << std::endl;
 }
 
@@ -663,7 +654,7 @@ void   server::printInfoUsers()
     for (int i = 1; i <= _nbClient; i++)
     {
         std::cout << "Socket client : " << _userN[i]->getClientFd() << std::endl
-            << "Login client : "  << _userN[i]->getName() << std::endl 
+            << "Login client : "  << _userN[i]->getUsername() << std::endl 
             << "Nickname client : " << _userN[i]->getNick() << std::endl << std::endl;
     }
 }

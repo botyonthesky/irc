@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/08 13:10:21 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/08 17:35:00 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,14 +39,9 @@ class server
         int                         _idxClient[MAXCLIENT];
         user*                       _userN[MAXCLIENT];
         std::vector<std::string>    _loginClient;
-        std::string                 _nickClient[MAXCLIENT];
-
         
-        // channel*                    _channel[MAXCHANNEL];
-        std::string                 _channelName[MAXCHANNEL];
         int                         _nbChannel;
 
-        
         std::vector<std::string>    _command; 
 
         
