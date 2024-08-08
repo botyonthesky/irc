@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:18:47 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/08 16:16:33 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/08 16:49:06 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,6 @@ channel::channel(user * user, std::string name) : _nbUsers(0)
     {
         std::cerr << e.what() << '\n';
     }
-    
 }
 
 channel::~channel()
@@ -75,7 +74,7 @@ void        channel::setUserN(user * user, int idx)
 
 void        channel::delUserN(int idx)
 {
-    std::cout << "del user" << std::endl;
+    // std::cout << "del user" << std::endl;
     if (idx < 1 || idx > _nbUsers)
     {
         std::cout << "Invalid idx" << std::endl;
@@ -83,16 +82,11 @@ void        channel::delUserN(int idx)
     else
     {
         for (int i = idx; i < _nbUsers; i++)
-        {
-            std::cout << "usern i : " << _userN[i]->getNick() << "va devenir : " << _userN[i + 1]->getNick();
             _userN[i] = _userN[i + 1];
-            
-        }
         _userN[_nbUsers] = NULL;
         _nbUsers--;
     }
 }
-
 
 int     channel::getIdxUserByName(std::string name)
 {
@@ -118,3 +112,6 @@ void    channel::majIdxUserChannel()
     }
         
 }
+
+
+

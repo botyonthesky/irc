@@ -82,18 +82,6 @@ void    user::info()
     _server.sendMessage(this->_clientFd, "" , msg + channel);
 }
 
-// void    user::speCommandOp()
-// {
-//     if (this->_opChannel)
-//     {
-
-//     }
-//     else
-//     {
-//         _server.sendMessage(_clientFd, "IRC", "You're not operator inm this channel");
-//     }
-// }
-
 void    user::leave()
 {
    if (_currChannel == "No channel")
@@ -104,7 +92,6 @@ void    user::leave()
     else
     {
         channel * curr = getChannelByName(_currChannel);
-        // std::cout << "curr chan " << curr->getName() << std::endl;
         int idx = curr->getIdxUserByName(this->_username);
         curr->delUserN(idx);
         setNickname(_nickname.erase(0, 1));
@@ -221,7 +208,6 @@ user*  user::findUserChannelByName(std::string name)
             return (curr->getUserN(i));
     }
     return (NULL);
-
 }
 
 bool    user::checkKickInfo()
@@ -278,7 +264,6 @@ int    user::checkChannel()
 
 void    user::registerChannel(std::string name, channel * channel)
 {
-
     for (int i = 1; i <= _server.getNbChannel(); i++)
     {
         if (_server.channelId[i]->getName() == name)
@@ -353,10 +338,7 @@ void    user::msg()
         return ;
     }
     if (!checkUserList())
-    {
         _server.sendMessage(_clientFd, "", "The username is not valid !");
-        // throw NotValidUserName();
-    }
     else
     {
         int fdToSend = _server.findFdClient(_server.getCommand()[1]);
@@ -380,9 +362,7 @@ void    user::who()
         int nb = curr->getNbUser();
         msg = "\nYou are actually in the channel : " + _currChannel + "\nThere is " + toStr(nb) + " client(s) in this channel -> \n";
         if (curr->getNbUser() == 1)
-        {
             msg += "User : " + this->_nickname;
-        }
         else
         {
             for (int i = 1; i <= curr->getNbUser(); i++)
@@ -465,15 +445,6 @@ bool            user::getInChannel()
     return (_inChannel);
 }
 
-// bool            user::getOpChannel()
-// {
-//     return (_opChannel);
-// }
-
-// void        user::setOpchannel(bool op)
-// {
-//     _opChannel = op;
-// }
 channel*    user::getChannelByIdx(int idx)
 {
     return (channelUser[idx]);

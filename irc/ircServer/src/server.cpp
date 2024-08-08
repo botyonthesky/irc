@@ -14,7 +14,6 @@
 
 server::server() : _nbClient(0), _nbChannel(0)
 {
-    // std::cout << "Server default constructor" << std::endl;
 }
 
 server::~server()
@@ -23,7 +22,6 @@ server::~server()
     for (size_t i = 0; i < _pollFds.size(); i++)
         close(_pollFds[i].fd);
     std::cout << "Server destructor" << std::endl;
-
 }
 
 const char* server::initError::what() const throw()
@@ -36,7 +34,6 @@ server::initError::initError(const std::string& error)
     std::strncpy(_error, "Error on : ", 99);
     std::strncat(_error, error.c_str(), 99 - std::strlen(_error));
     _error[99] = '\0';
-
 }
 
 void    server::initServer()
@@ -180,9 +177,7 @@ void    server::parsingCommand(std::string input)
 void    server::printCmd()
 {
     for (std::vector<std::string>::iterator it = _command.begin(); it != _command.end(); it++)
-    {
         std::cout << *it << std::endl;
-    }
 }
 
 void    server::manageInput(user * user, std::string input)
@@ -241,10 +236,8 @@ void    server::printChannelInfo()
         std::cout << "each channel info : " << std::endl;
         for (int i = 1; i <= _nbChannel; i++)
         {
-            std::cout << channelId[i]->getName() << std::endl;
-            std::cout << channelId[i]->getNbUser() << std::endl;
-
-            // std::cout << channelId[i]->getIdx() << std::endl;
+            std::cout << "Channel name : " << channelId[i]->getName() << std::endl;
+            std::cout << "Channel nb user : " << channelId[i]->getNbUser() << std::endl;
             for (int j = 1; j <= channelId[i]->getNbUser(); j++)
             {  
                 std::cout << "-----------" << std::endl;
@@ -332,7 +325,7 @@ void    server::manageMsg(int clientFd, std::string input)
             infoClient(currUser->getClientFd());
     }
     else
-        std::cout << "currUser is null" << std::endl;
+        std::cout << "curr User is null !!!!" << std::endl;
 }
 void    server::parsingMsg(user * user, std::string input)
 {
@@ -629,18 +622,6 @@ void   server::checkChannel(std::string currChannel)
     }
 }
 
-// void    server::decremChannelNbUser(std::string currChannel)
-// {
-//     for (int i = 1; i <= _nbChannel; i++)
-//     {
-//         if (channelId[i]->getName() == currChannel)
-//         {
-//             channelId[i]->setNbUser(-1);
-//         }
-//     }
-// }
-
-
 void    server::updateLoginList(std::string old, std::string login)
 {
     if (_loginClient.size() == 1)
@@ -662,7 +643,6 @@ void    server::updateLoginList(std::string old, std::string login)
 
 void    server::printLoginList()
 {
-    std::cout << "print list " << std::endl;
     std::vector<std::string> tmp = _loginClient;
     for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); it++)
     {
@@ -721,101 +701,3 @@ void    server::setNbChannel(int i)
     _nbChannel += i;
 }
 
-
-// void    server::readingClient(int clientFd)
-// {
-//     char buff[BUFSIZ] = {0};
-//     _bytesRead = recv(clientFd, buff, BUFSIZ - 1, 0);
-//     std::string input = buff;
-//     if (_bytesRead == -1)    
-//     {
-//         initError ex("recv");
-//         throw ex;
-//     }
-//     else if (_bytesRead == 0)
-//     {
-//         close(clientFd);
-//         for (size_t i = 0; i < _pollFds.size(); i++)
-//         {
-//             if (_pollFds[i].fd == clientFd)
-//             {
-//                 _pollFds.erase(_pollFds.begin() + i);
-//                 break;
-//             }
-//         }
-//         for (int i = 1; i <= _nbClient; i++)
-//         {
-//             if (_userN[i]->getClientFd() == clientFd)
-//             {
-//                 delete _userN[i];
-//                 for(int j = i; j < _nbClient - 1; j++)
-//                     _userN[j] = _userN[j + 1];
-//                 _nbClient--;
-//                 break;
-//             }
-//         }
-//     }
-//     else
-//     {
-//         buff[_bytesRead] = '\0';
-//         std::string input(buff);
-//         manageMsg(clientFd, input);
-//     }
-// }
-// void    server::readingInfo(int clientFd)
-// {
-//     char buff[BUFSIZ] = {0};
-//     _bytesRead = recv(clientFd, buff, BUFSIZ - 1, 0);
-//     std::string input = buff;
-//     if (_bytesRead == -1)    
-//     {
-//         initError ex("recv");
-//         throw ex;
-//     }
-//     else if (_bytesRead == 0)
-//     {
-//         close(clientFd);
-//         for (size_t i = 0; i < _pollFds.size(); i++)
-//         {
-//             if (_pollFds[i].fd == clientFd)
-//             {
-//                 _pollFds.erase(_pollFds.begin() + i);
-//                 break;
-//             }
-//         }
-//         for (int i = 1; i <= _nbClient; i++)
-//         {
-//             if (_userN[i]->getClientFd() == clientFd)
-//             {
-//                 delete _userN[i];
-//                 for(int j = i; j < _nbClient - 1; j++)
-//                     _userN[j] = _userN[j + 1];
-//                 _nbClient--;
-//                 break;
-//             }
-//         }
-//     }
-//     else
-//     {
-//         buff[_bytesRead] = '\0';
-//         std::string input(buff);
-//         if (input == "HELP")
-//         {
-//             sendMessage(clientFd, "IRC", "USER [username] [hostname(unused)] [servername(unused)] [realname]\n      NICK [nickname]");
-//             readingInfo(clientFd);
-//         }
-//         else
-//         {
-//             if (!manageUserInfo(clientFd, input))
-//                 infoRequired(clientFd);
-//             else if (getUserByFd(clientFd) != NULL && getUserByFd(clientFd)->getNick().empty())
-//                 infoRequired(clientFd);
-//             else
-//             {
-//                 sendMessage(clientFd, "IRC", "Welcome !");
-//                 printInfoNewUser(getUserByFd(clientFd));   
-//                 infoClient(_nbClient); 
-//             }
-//         }
-//     }
-// }
