@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:18:47 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/08 13:35:51 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/08 16:16:33 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,8 @@ channel::channel(user * user, std::string name) : _nbUsers(0)
         _nbUsers++;
         _idxUser = _nbUsers;
         _userN[_idxUser] = user;
-        
+        user->setNickname("@" + user->getNick());
+        _nameOperator = user->getNick();
     }
     catch(const std::exception& e)
     {
@@ -74,6 +75,7 @@ void        channel::setUserN(user * user, int idx)
 
 void        channel::delUserN(int idx)
 {
+    std::cout << "del user" << std::endl;
     if (idx < 1 || idx > _nbUsers)
     {
         std::cout << "Invalid idx" << std::endl;
@@ -82,6 +84,7 @@ void        channel::delUserN(int idx)
     {
         for (int i = idx; i < _nbUsers; i++)
         {
+            std::cout << "usern i : " << _userN[i]->getNick() << "va devenir : " << _userN[i + 1]->getNick();
             _userN[i] = _userN[i + 1];
             
         }
@@ -95,7 +98,7 @@ int     channel::getIdxUserByName(std::string name)
 {
     for (int i = 1; i <= getNbUser(); i++)
     {
-        if (_userN[i]->getName() == name)
+        if (_userN[i]->getNick() == name)
             return (i);
     }
     return (-1);

@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/08 12:47:30 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/08 15:25:02 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,6 @@ class user
                 std::string             _username;
                 std::string             _nickname;
                 std::string             _currChannel;
-                bool                    _opChannel;
                 bool                    _clientRegister;
 
     public:
@@ -44,11 +43,16 @@ class user
                 bool            isValidChannelName(std::string name);
                 bool            checkUserList(void);
                 int             checkChannel(void);
+                bool            checkUser(void);
+                bool            checkKickInfo(void);
+                bool            checkUserChannelList(void);
+                user*           findUserChannelByName(std::string name);
 
                 void            userName(void);
                 void            join(void);
                 void            nick(void);
                 void            msg(void);
+                void            kick(void);
  
                 void            info(void);
                 void            who(void);
@@ -65,11 +69,11 @@ class user
                 std::string     getNick(void);
                 std::string     getCurrChannel(void);
                 bool            getInChannel(void);
-                bool            getOpChannel(void);
+                // bool            getOpChannel(void);
 
                 void            setIdx(int idx);
                 void            decrementIdx(void);
-                void            setOpchannel(bool op);
+                // void            setOpchannel(bool op);
                 void            setNickname(std::string nickname);
                 void            registerChannel(std::string name, channel * channel);
                 

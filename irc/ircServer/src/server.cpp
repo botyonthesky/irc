@@ -116,6 +116,8 @@ void   server::onlyOne(user * user, std::string input)
         quit(user);
     if (input == "channel")
         printChannelInfo();
+    if (input == "user")
+        user->checkUserChannelList();
     int i = 0;
     std::string call[5] = {"/info", "/help", "/who", "/list", "/leave"};
     void (user::*ptr[5])() = {&user::info, &user::help, &user::who, &user::list, &user::leave};
@@ -187,9 +189,9 @@ void    server::manageInput(user * user, std::string input)
 {
     parsingCommand(input);
     int i = 0;
-    std::string call[4] = {"/nick", "/user", "/join", "/msg"};
-    void (user::*ptr[4])() = {&user::nick, &user::userName, &user::join, &user::msg};
-    while (i < 4)
+    std::string call[5] = {"/nick", "/user", "/join", "/msg", "KICK"};
+    void (user::*ptr[5])() = {&user::nick, &user::userName, &user::join, &user::msg, &user::kick};
+    while (i < 5)
     {
         if (_command[0] == call[i])
             break;
@@ -217,6 +219,11 @@ void    server::manageInput(user * user, std::string input)
                 (user->*ptr[3])();
                 break;
             }
+        case 4 :
+            {
+                (user->*ptr[4])();
+                break;
+            }
         default :
             {
                 msgToCurrent(user, input);
@@ -241,7 +248,7 @@ void    server::printChannelInfo()
             for (int j = 1; j <= channelId[i]->getNbUser(); j++)
             {  
                 std::cout << "-----------" << std::endl;
-                std::string name = channelId[i]->getUserN(j)->getName();
+                std::string name = channelId[i]->getUserN(j)->getNick();
                 int idx = channelId[i]->getIdxUserByName(name);
                 std::cout << "name user in channel : " << name << std::endl;
                 std::cout << "idx user in channel : " << idx << std::endl;

@@ -22,7 +22,6 @@ user::user(server& srv, int clientFd, std::vector<std::string> command) : _serve
             _server.sendMessage(clientFd, "IRC", "Not a valid username");
         _username = command[1];
         _name = command[4];
-        _opChannel = false;
         _nickname = "";
         _currChannel = "No channel";
         _server.setLogin(_username);
@@ -31,7 +30,6 @@ user::user(server& srv, int clientFd, std::vector<std::string> command) : _serve
     {
         std::cerr << e.what() << '\n';
     }
-    
 }
 
 user::~user()
@@ -50,7 +48,7 @@ bool    user::isValidName(std::string name)
 
 void    user::help()
 {
-    if (this->_opChannel)
+    if (this->_nickname[0] == '@')
     {
         std::string msg = "\nSpecific operator commands ->\n"
                         "KICK [nick name] [channel]         eject an user of the channel\n"
@@ -61,12 +59,12 @@ void    user::help()
     std::string msg = "\nBasic commands ->\n"
                         "/info                              display your information\n"
                         "/nick [nick name]                  change your nickname\n"
-                        "/user [login]                      change your login\n"
+                        "/user [user name]                  change your login\n"
                         "/join [channel]                    join channel\n"
                         "/leave                             leave current channel\n"
                         "/quit                              quit IRC\n"
                         "/who                               list of users in current channel\n"
-                        "/msg [login] [msg]                 submit msg to login\n"
+                        "/msg [nick name] [msg]             submit msg to login\n"
                         "/list                              list of channel\n"
                         "[msg]                              send msg to current channel\n";
 
@@ -84,17 +82,17 @@ void    user::info()
     _server.sendMessage(this->_clientFd, "" , msg + channel);
 }
 
-void    user::speCommandOp()
-{
-    if (this->_opChannel)
-    {
+// void    user::speCommandOp()
+// {
+//     if (this->_opChannel)
+//     {
 
-    }
-    else
-    {
-        _server.sendMessage(_clientFd, "IRC", "You're not operator inm this channel");
-    }
-}
+//     }
+//     else
+//     {
+//         _server.sendMessage(_clientFd, "IRC", "You're not operator inm this channel");
+//     }
+// }
 
 void    user::leave()
 {
@@ -106,10 +104,10 @@ void    user::leave()
     else
     {
         channel * curr = getChannelByName(_currChannel);
-        std::cout << "curr chan " << curr->getName() << std::endl;
+        // std::cout << "curr chan " << curr->getName() << std::endl;
         int idx = curr->getIdxUserByName(this->_username);
         curr->delUserN(idx);
-        _opChannel = false;
+        setNickname(_nickname.erase(0, 1));
         _inChannel = false;
         std::string msg = "You left the channel : " + _currChannel;
         _server.sendMessage(_clientFd, "" , msg);
@@ -121,6 +119,11 @@ void    user::leave()
 
 void    user::nick()
 {
+    if (_server.getCommand().size() != 2)
+    {
+        _server.sendMessage(_clientFd, "", "Invalid Format. Usage : /nick [nick name]");
+        return ;
+    }
     try
     {
         if (!isValidName(_server.getCommand()[1]))
@@ -144,6 +147,11 @@ void    user::nick()
 
 void   user::userName()
 {
+    if (_server.getCommand().size() != 2)
+    {
+        _server.sendMessage(_clientFd, "", "Invalid Format. Usage : /user [user name]");
+        return ;
+    }
     try
     {
         if (!isValidName(_server.getCommand()[1]))
@@ -163,6 +171,97 @@ void   user::userName()
     {
         std::cerr << e.what() << '\n';
     }
+}
+bool    user::checkUser()
+{
+    if (_server.getCommand().size() != 3)
+    {
+        _server.sendMessage(_clientFd, "IRC", "Not valid format. Usage : KICK [nick name] [channel]");
+        return (false);
+    }
+    if (_inChannel == false)
+    {
+        _server.sendMessage(_clientFd, "", "You re actually in any channel !");
+        return (false);
+    }
+    if (_currChannel != _server.getCommand()[2])
+    {
+        _server.sendMessage(_clientFd, "IRC", "You re not in the specify channel");
+        return (false);
+    }
+    if (_nickname[0] != '@')
+    {
+        _server.sendMessage(_clientFd, "IRC", "You re not operator of this channel");
+        return (false);
+    }
+    if (_server.getCommand().size() != 3)
+        {
+        _server.sendMessage(_clientFd, "", "Invalid Format. Usage : /nick [nick name]");
+        return (false);
+    }
+    return (true);
+}
+bool    user::checkUserChannelList()
+{
+    channel * curr = getChannelByName(_currChannel);
+    for (int i = 1; i <= curr->getNbUser(); i++)
+    {
+        if (curr->getUserN(i)->getNick() == _server.getCommand()[1])
+            return (true);
+    }
+    return (false);
+}
+
+user*  user::findUserChannelByName(std::string name)
+{
+    channel * curr = getChannelByName(_currChannel);
+    for (int i = 1; i <= curr->getNbUser(); i++)
+    {
+        if (curr->getUserN(i)->getNick() == name)
+            return (curr->getUserN(i));
+    }
+    return (NULL);
+
+}
+
+bool    user::checkKickInfo()
+{
+    if (!checkUserChannelList())
+    {
+        _server.sendMessage(_clientFd, "IRC", "Nickname not found in this channel !");
+        return (false);
+    }
+    if (_currChannel != _server.getCommand()[2])
+    {
+        _server.sendMessage(_clientFd, "IRC", "You re not in the specify channel");
+        return (false);
+    }
+    return (true);
+}
+
+void    user::kick()
+{
+    if (!checkUser())
+        return ;
+    if (!checkKickInfo())
+        return ;
+    else
+    {
+        std::string nameK = _server.getCommand()[1];
+        user * toKick = findUserChannelByName(nameK);
+        channel * curr = getChannelByName(_currChannel);
+        int idx = curr->getIdxUserByName(nameK);
+        curr->delUserN(idx);
+        toKick->_currChannel = "No channel";
+        toKick->_inChannel = false;
+        std::string msg = "You have been ejected form the channel : " + _currChannel;
+        _server.sendMessage(toKick->getClientFd(), "" , msg);
+        std::cout << _server.getCommand()[1] << " left channel : " << _currChannel << std::endl;
+        _server.checkChannel(_currChannel);
+        _server.infoClient(toKick->getClientFd());
+    }
+    return ;
+    
 }
 
 int    user::checkChannel()
@@ -192,7 +291,6 @@ void    user::createNewChannel(std::string name)
     _inChannel = true;
     std::cout << _nickname << " has created and join the channel : " << name << std::endl;
     _currChannel = name;
-    _opChannel = true;
     _server.setNbChannel(1);
     newChannel->setIdx(_server.getNbChannel());
     _server.channelId[newChannel->getIdx()] = newChannel;
@@ -216,6 +314,11 @@ void    user::joinChannel(std::string name)
 }
 void    user::join()
 {
+    if (_server.getCommand().size() != 2)
+    {
+        _server.sendMessage(_clientFd, "", "Invalid Format. Usage : /join [channel name]");
+        return ;
+    }
     std::string name = _server.getCommand()[1];
     try
     {
@@ -244,6 +347,11 @@ bool    user::isValidChannelName(std::string name)
 
 void    user::msg()
 {
+    if (_server.getCommand().size() != 3)
+    {
+        _server.sendMessage(_clientFd, "", "Invalid Format. Usage : /msg [nickname] [msg]");
+        return ;
+    }
     if (!checkUserList())
     {
         _server.sendMessage(_clientFd, "", "The username is not valid !");
@@ -357,15 +465,15 @@ bool            user::getInChannel()
     return (_inChannel);
 }
 
-bool            user::getOpChannel()
-{
-    return (_opChannel);
-}
+// bool            user::getOpChannel()
+// {
+//     return (_opChannel);
+// }
 
-void        user::setOpchannel(bool op)
-{
-    _opChannel = op;
-}
+// void        user::setOpchannel(bool op)
+// {
+//     _opChannel = op;
+// }
 channel*    user::getChannelByIdx(int idx)
 {
     return (channelUser[idx]);
