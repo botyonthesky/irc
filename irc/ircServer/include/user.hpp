@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/07 14:42:09 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/08 12:47:30 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,7 @@ class user
                 bool            getOpChannel(void);
 
                 void            setIdx(int idx);
+                void            decrementIdx(void);
                 void            setOpchannel(bool op);
                 void            setNickname(std::string nickname);
                 void            registerChannel(std::string name, channel * channel);

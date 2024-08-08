@@ -114,6 +114,8 @@ void   server::onlyOne(user * user, std::string input)
 {
     if (input == "/quit")
         quit(user);
+    if (input == "channel")
+        printChannelInfo();
     int i = 0;
     std::string call[5] = {"/info", "/help", "/who", "/list", "/leave"};
     void (user::*ptr[5])() = {&user::info, &user::help, &user::who, &user::list, &user::leave};
@@ -225,12 +227,27 @@ void    server::manageInput(user * user, std::string input)
 
 void    server::printChannelInfo()
 {
-    std::cout << "each channel info" << std::endl;
-    for (int i = 1; i <= _nbChannel; i++)
+    if (_nbChannel == 0)
+        std::cout << "Actually no channel !" << std::endl;
+    else
     {
-        std::cout << channelId[i]->getName() << std::endl;
-        std::cout << channelId[i]->getIdx() << std::endl;
-        std::cout << channelId[i]->getNbUser() << std::endl;
+        std::cout << "each channel info : " << std::endl;
+        for (int i = 1; i <= _nbChannel; i++)
+        {
+            std::cout << channelId[i]->getName() << std::endl;
+            std::cout << channelId[i]->getNbUser() << std::endl;
+
+            // std::cout << channelId[i]->getIdx() << std::endl;
+            for (int j = 1; j <= channelId[i]->getNbUser(); j++)
+            {  
+                std::cout << "-----------" << std::endl;
+                std::string name = channelId[i]->getUserN(j)->getName();
+                int idx = channelId[i]->getIdxUserByName(name);
+                std::cout << "name user in channel : " << name << std::endl;
+                std::cout << "idx user in channel : " << idx << std::endl;
+                std::cout << "-----------" << std::endl;
+            }
+        }
     }
 }
 
@@ -248,17 +265,21 @@ void    server::msgToCurrent(user * user, std::string input)
 }
 void    server::findUser(channel * channel, user * user, std::string input)
 {
-    std::cout << "find user " << std::endl;
-    int i = 1;
-    while (i <= channel->getNbUser())
+    if (channel->getNbUser() == 1)
+        sendMessage(user->getClientFd(), "", "You re alone in this channel");
+    else
     {
-        if (channel->getUserN(i) == user)
-            i++;
-        else
+        int i = 1;
+        while (i <= channel->getNbUser())
         {
-            std::string from = user->getNick();
-            sendMessage(channel->getUserN(i)->getClientFd(), from, input);
-            i++;
+            if (channel->getUserN(i) == user)
+                i++;
+            else
+            {
+                std::string from = user->getNick();
+                sendMessage(channel->getUserN(i)->getClientFd(), from, input);
+                i++;
+            }
         }
     }
 }
@@ -301,7 +322,7 @@ void    server::manageMsg(int clientFd, std::string input)
     {
         parsingMsg(currUser, input);
         if (input != "/quit")
-            infoClient(currUser->getIdx());
+            infoClient(currUser->getClientFd());
     }
     else
         std::cout << "currUser is null" << std::endl;
@@ -390,7 +411,7 @@ void    server::receptInfo(std::string input, int clientFd)
         {
             sendMessage(clientFd, "IRC", "Welcome !");
             printInfoNewUser(getUserByFd(clientFd));   
-            infoClient(_nbClient); 
+            infoClient(clientFd); 
         }
     }
 }
@@ -468,17 +489,17 @@ void    server::handleClient(int clientFd)
     infoRequired(clientFd);
 }
 
-void    server::infoClient(int i)
+void    server::infoClient(int clientFd)
 {
     std::string info;
     std::string format = "$> ";
     std::string format2 = " ------IRC------[";
     std::string format3 = "]------>";
-
-    info = format + _userN[i]->getNick() + format2
-    + _userN[i]->getCurrChannel() + format3;
+    user * curr = getUserByFd(clientFd);
+    info = format + curr->getNick() + format2
+    + curr->getCurrChannel() + format3;
     int msgSize = info.size();
-    int byteS = send(_userN[i]->getClientFd(), info.c_str(), msgSize, 0);
+    int byteS = send(clientFd, info.c_str(), msgSize, 0);
     if (byteS == -1)
     {
         initError ex ("send");
@@ -496,7 +517,7 @@ int     server::findFdClient(std::string user)
    int fd;
     for (int i = 1; i <= _nbClient; i++)
     {
-        if (_userN[i]->getName() == user)
+        if (_userN[i]->getNick() == user)
             fd = _userN[i]->getClientFd();
     }
     return (fd);
@@ -601,16 +622,16 @@ void   server::checkChannel(std::string currChannel)
     }
 }
 
-void    server::decremChannelNbUser(std::string currChannel)
-{
-    for (int i = 1; i <= _nbChannel; i++)
-    {
-        if (channelId[i]->getName() == currChannel)
-        {
-            channelId[i]->setNbUser(-1);
-        }
-    }
-}
+// void    server::decremChannelNbUser(std::string currChannel)
+// {
+//     for (int i = 1; i <= _nbChannel; i++)
+//     {
+//         if (channelId[i]->getName() == currChannel)
+//         {
+//             channelId[i]->setNbUser(-1);
+//         }
+//     }
+// }
 
 
 void    server::updateLoginList(std::string old, std::string login)

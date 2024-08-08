@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 13:07:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/01 17:52:47 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/08 11:22:30 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@
 #include <climits>
 #include <vector>
 #include <cstring> 
+#include <cstdlib>
 
 #include "utils.hpp"
 #include "client.hpp"

@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:16:40 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/06 16:30:30 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/08 13:34:05 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ class channel
         
         std::string         _name;
         int                 _idx;
+        int                 _idxUser;
         int                 _nbUsers;
         user*               _userN[MAXCLIENT]; 
 
@@ -32,13 +33,17 @@ class channel
         channel(user * user, std::string name);
         ~channel();
 
-
+        // int             getIdxByUserName(std::string name);
         bool            isValidChannelName(std::string name);
+        void            majIdxUserChannel(void);
         std::string     getName(void);
         int             getIdx(void);
+        int             getIdxUser(void);
         int             getNbUser(void);
         user*           getUserN(int idx);
+        int             getIdxUserByName(std::string name);
 
+        void            setIdxUser(int idx);
         void            setIdx(int idx);
         void            setNbUser(int x);
         void            setUserN(user * user, int idx);

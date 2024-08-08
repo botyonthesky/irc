@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/07 14:54:49 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/08 13:10:21 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,7 @@ class server
         void    manageNick(int clientFd, std::string command);
         void    infoRequired(int clientFd);
         void    handleClient(int clientFd);
-        void    infoClient(int i);
+        void    infoClient(int clientFd);
         void    receptInfo(std::string input, int clientFd);
         void    readingInfo(int clientFd);
 
@@ -104,7 +104,7 @@ class server
 
         void                        checkChannel(std::string currChannel);        
         void                        printChannelInfo(void);
-        void                        decremChannelNbUser(std::string currChannel);
+        // void                        decremChannelNbUser(std::string currChannel);
         void                        getNbUserInChannel(std::string currChannel);
 
         int                         getNbClient(void);

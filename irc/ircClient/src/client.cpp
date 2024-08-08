@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 17:21:53 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/07 15:02:23 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/08 11:22:44 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,9 @@ void    client::receivedMessage()
         else if (_bytesRead == 0)
         {
             std::cout << "Connection closed by peer." << std::endl;
-            break ;
+            exit(0);
+            
+            // break ;
         }
         else 
         {
