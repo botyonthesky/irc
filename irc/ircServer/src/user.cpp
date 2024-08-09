@@ -21,6 +21,7 @@ user::user(server& srv, int clientFd, std::vector<std::string> command) : _serve
         if (!isValidUsername(command[1]))
             _server.sendMessage(clientFd, "IRC", "Not a valid username");
         _username = command[1];
+        _hostname = command[3];
         _realName = command[4];
         _nickname = "";
         _currChannel = "No channel";
@@ -194,11 +195,6 @@ bool    user::checkUser()
         _server.sendMessage(_clientFd, "IRC", "You re not operator of this channel");
         return (false);
     }
-    if (_server.getCommand().size() != 3)
-        {
-        _server.sendMessage(_clientFd, "", "Invalid Format. Usage : /nick [nick name]");
-        return (false);
-    }
     return (true);
 }
 bool    user::checkUserChannelList()
@@ -260,7 +256,50 @@ void    user::kick()
         _server.infoClient(toKick->getClientFd());
     }
     return ;
-    
+}
+bool    user::isOperatorOfChannel(std::string channel)
+{
+    if (_server.getCommand().size() != 3)
+    {
+        _server.sendMessage(_clientFd, "IRC", "Invalid format. Usage : INVITE [nickname] [channel]");
+        return (false);
+    }
+    if (channel != _currChannel)
+    {
+        _server.sendMessage(_clientFd, "IRC", "You re not in this channel");
+        return (false);
+    }
+    if (_nickname[0] != '@')
+    {
+        _server.sendMessage(_clientFd, "IRC", "You re not operator of this channel");
+        return (false);
+    }
+    if(!checkNicknameList(_server.getCommand()[1]))
+    {
+        _server.sendMessage(_clientFd, "IRC", "Not valid nickname");
+        return (false);
+    }
+    return (true);
+}
+
+
+void    user::invite()
+{   
+    if (!isOperatorOfChannel(_server.getCommand()[2]))
+        return ;
+    else
+    {
+        std::string nickTo = _server.getCommand()[1];
+        std::string channelTo = _server.getCommand()[2];
+        user * toSend = _server.getUserByNickname(nickTo);
+        if (toSend == NULL)
+            std::cout << "error on invite, tosend is null" << std::endl;
+        std::string msgFrom;
+        msgFrom = "User " + _nickname + " inviting";
+        std::string msgTo;
+        msgTo = nickTo + " to channel " + channelTo;
+        _server.sendMessage(toSend->getClientFd(), msgFrom, msgTo);
+    }
 }
 
 int    user::checkChannel()
@@ -354,7 +393,7 @@ void    user::msg()
         _server.sendMessage(_clientFd, "", "Invalid Format. Usage : /msg [nickname] [msg]");
         return ;
     }
-    if (!checkNicknameList())
+    if (!checkNicknameList(_server.getCommand()[1]))
         _server.sendMessage(_clientFd, "", "The username is not valid !");
     else
     {
@@ -409,7 +448,7 @@ void    user::list()
     }
     _server.sendMessage(_clientFd, "", msg);
 }
-bool    user::checkNicknameList()
+bool    user::checkNicknameList(std::string nickname)
 {
     std::vector<std::string> tmp = _server.nicknameClient;
     if (tmp.size() == 1)
@@ -418,7 +457,7 @@ bool    user::checkNicknameList()
     {
         for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); it++)
         {
-            if (_server.getCommand()[1] == *it)
+            if (nickname == *it)
                 return (true);
         }
     }   

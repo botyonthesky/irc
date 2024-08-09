@@ -131,6 +131,8 @@ void   server::onlyOne(user * user, std::string input)
         printChannelInfo();
     if (input == "user")
         user->checkUserChannelList();
+    if(input == "alluser")
+        printInfoUsers();
     int i = 0;
     std::string call[5] = {"/info", "/help", "/who", "/list", "/leave"};
     void (user::*ptr[5])() = {&user::info, &user::help, &user::who, &user::list, &user::leave};
@@ -147,11 +149,11 @@ void    server::manageInput(user * user, std::string input)
 {
     parsingCommand(input);
     int i = 0;
-    std::string call[5] = {"/nick", "/user", "/join", "/msg", "KICK"};
-    void (user::*ptr[5])() = {&user::nick, &user::userName, &user::join, &user::msg, &user::kick};
-    while (i < 5 && _command[0] != call[i])
+    std::string call[6] = {"/nick", "/user", "/join", "/msg", "KICK", "INVITE"};
+    void (user::*ptr[6])() = {&user::nick, &user::userName, &user::join, &user::msg, &user::kick, &user::invite};
+    while (i < 6 && _command[0] != call[i])
         i++;
-    if (i < 5)
+    if (i < 6)
         (user->*ptr[i])();
     else
         msgToCurrent(user, input);
@@ -464,7 +466,8 @@ void    server::receptInfo(std::string input, int clientFd)
         else
         {
             sendMessage(clientFd, "IRC", "Welcome !");
-            printInfoNewUser(getUserByFd(clientFd));   
+            printInfoNewUser(getUserByFd(clientFd));
+            _idxClient[_nbClient] = _nbClient;
             infoClient(clientFd); 
         }
     }
@@ -590,7 +593,8 @@ void   server::printInfoUsers()
     {
         std::cout << "Socket client : " << _userN[i]->getClientFd() << std::endl
             << "Login client : "  << _userN[i]->getUsername() << std::endl 
-            << "Nickname client : " << _userN[i]->getNick() << std::endl << std::endl;
+            << "Nickname client : " << _userN[i]->getNick() << std::endl 
+            << "idx user in server : " << _idxClient[i] << std::endl;
     }
 }
 void    server::printCmd()
@@ -621,7 +625,20 @@ void    server::printChannelInfo()
         }
     }
 }
-
+user*   server::getUserByNickname(std::string nickname)
+{
+    std::vector<std::string> list = nicknameClient;
+    int i = 1;
+    for (std::vector<std::string>::iterator it = list.begin(); it != list.end(); it++)
+    {
+        if (nickname == *it)
+        {
+            return (_userN[i]);
+        }
+        i++;
+    }
+    return (NULL);
+}
 int     server::getNbClient(void)
 {
     return (_nbClient);

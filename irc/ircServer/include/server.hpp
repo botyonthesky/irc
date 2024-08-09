@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/09 12:22:48 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/09 13:30:28 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,6 +105,7 @@ class server
         void                        printChannelInfo(void);
         // void                        decremChannelNbUser(std::string currChannel);
         void                        getNbUserInChannel(std::string currChannel);
+        user*                       getUserByNickname(std::string nickname);
 
         int                         getNbClient(void);
         int                         getSocketfd(void);

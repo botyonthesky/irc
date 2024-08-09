@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/09 11:15:02 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/09 12:59:43 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ class user
                 std::string             _realName;
                 std::string             _username;
                 std::string             _nickname;
+                std::string             _hostname;
                 std::string             _currChannel;
                 bool                    _clientRegister;
 
@@ -42,7 +43,8 @@ class user
                 bool            isValidNickname(std::string nickname);
                 bool            isValidUsername(std::string username);
                 bool            isValidChannelName(std::string name);
-                bool            checkNicknameList(void);
+                bool            checkNicknameList(std::string nickname);
+                bool            isOperatorOfChannel(std::string channel);
                 int             checkChannel(void);
                 bool            checkUser(void);
                 bool            checkKickInfo(void);
@@ -54,6 +56,7 @@ class user
                 void            nick(void);
                 void            msg(void);
                 void            kick(void);
+                void            invite(void);
  
                 void            info(void);
                 void            who(void);
