@@ -29,13 +29,6 @@ const char* server::initError::what() const throw()
     return (_error);
 }
 
-server::initError::initError(const std::string& error)
-{
-    std::strncpy(_error, "Error on : ", 99);
-    std::strncat(_error, error.c_str(), 99 - std::strlen(_error));
-    _error[99] = '\0';
-}
-
 void    server::initServer()
 {
     _sa.sin_family = AF_INET;
@@ -82,6 +75,29 @@ void    server::initPoll()
     serverPollFd.events = POLLIN;
     _pollFds.push_back(serverPollFd);
 }
+void    server::closeFd(int clientFd)
+{
+    close(clientFd);
+    for (size_t i = 0; i < _pollFds.size(); i++)
+    {
+        if (_pollFds[i].fd == clientFd)
+        {
+            _pollFds.erase(_pollFds.begin() + i);
+            break;
+        }
+    }
+    for (int i = 1; i <= _nbClient; i++)
+    {
+        if (_userN[i]->getClientFd() == clientFd)
+        {
+            delete _userN[i];
+            for(int j = i; j < _nbClient - 1; j++)
+                _userN[j] = _userN[j + 1];
+            _nbClient--;
+            break;
+        }
+    }
+}
 void    server::quit(user * user)
 {
     std::cout << "Now closing client : " << user->getUsername() << std::endl;
@@ -118,47 +134,28 @@ void   server::onlyOne(user * user, std::string input)
     int i = 0;
     std::string call[5] = {"/info", "/help", "/who", "/list", "/leave"};
     void (user::*ptr[5])() = {&user::info, &user::help, &user::who, &user::list, &user::leave};
-    while (i < 5)
-    {
-        if (input == call[i])
-            break;
+    while (i < 5 && input != call[i])
         i++;
-    }
-    switch (i)
-    {
-        case 0:
-            {
-                (user->*ptr[0])();
-                break;
-            }
-        case 1:
-            {
-                (user->*ptr[1])(); 
-                break;
-            }
-        case 2:
-            {
-                (user->*ptr[2])(); 
-                break;
-            }
-        case 3:
-            {
-                (user->*ptr[3])(); 
-                break;
-            }
-        case 4:
-            {
-                (user->*ptr[4])(); 
-                break;
-            }
-        default :
-        {
-            msgToCurrent(user, input);
-        }
-    }
+    if (i < 5)
+        (user->*ptr[i])();
+    else
+        msgToCurrent(user, input);
 }
 
 
+void    server::manageInput(user * user, std::string input)
+{
+    parsingCommand(input);
+    int i = 0;
+    std::string call[5] = {"/nick", "/user", "/join", "/msg", "KICK"};
+    void (user::*ptr[5])() = {&user::nick, &user::userName, &user::join, &user::msg, &user::kick};
+    while (i < 5 && _command[0] != call[i])
+        i++;
+    if (i < 5)
+        (user->*ptr[i])();
+    else
+        msgToCurrent(user, input);
+}
 void    server::parsingCommand(std::string input)
 {
     input = trim_and_reduce_spaces(input);
@@ -173,84 +170,6 @@ void    server::parsingCommand(std::string input)
     }
     _command.push_back(input.substr(start));
 }
-
-void    server::printCmd()
-{
-    for (std::vector<std::string>::iterator it = _command.begin(); it != _command.end(); it++)
-        std::cout << *it << std::endl;
-}
-
-void    server::manageInput(user * user, std::string input)
-{
-    parsingCommand(input);
-    int i = 0;
-    std::string call[5] = {"/nick", "/user", "/join", "/msg", "KICK"};
-    void (user::*ptr[5])() = {&user::nick, &user::userName, &user::join, &user::msg, &user::kick};
-    while (i < 5)
-    {
-        if (_command[0] == call[i])
-            break;
-        i++;
-    }
-    switch (i)
-    {
-        case 0:
-            {
-                (user->*ptr[0])();
-                break;
-            }
-        case 1:
-            {
-                (user->*ptr[1])(); 
-                break;
-            }
-        case 2 :
-            {
-                (user->*ptr[2])();
-                break;
-            }
-        case 3 :
-            {
-                (user->*ptr[3])();
-                break;
-            }
-        case 4 :
-            {
-                (user->*ptr[4])();
-                break;
-            }
-        default :
-            {
-                msgToCurrent(user, input);
-                break;
-            }
-    }
-}
-
-void    server::printChannelInfo()
-{
-    if (_nbChannel == 0)
-        std::cout << "Actually no channel !" << std::endl;
-    else
-    {
-        std::cout << "each channel info : " << std::endl;
-        for (int i = 1; i <= _nbChannel; i++)
-        {
-            std::cout << "Channel name : " << channelId[i]->getName() << std::endl;
-            std::cout << "Channel nb user : " << channelId[i]->getNbUser() << std::endl;
-            for (int j = 1; j <= channelId[i]->getNbUser(); j++)
-            {  
-                std::cout << "-----------" << std::endl;
-                std::string name = channelId[i]->getUserN(j)->getNick();
-                int idx = channelId[i]->getIdxUserByName(name);
-                std::cout << "name user in channel : " << name << std::endl;
-                std::cout << "idx user in channel : " << idx << std::endl;
-                std::cout << "-----------" << std::endl;
-            }
-        }
-    }
-}
-
 
 void    server::msgToCurrent(user * user, std::string input)
 {
@@ -336,93 +255,21 @@ void    server::parsingMsg(user * user, std::string input)
     else
         onlyOne(user, input);
 }
-void    server::closeFd(int clientFd)
-{
-    close(clientFd);
-    for (size_t i = 0; i < _pollFds.size(); i++)
-    {
-        if (_pollFds[i].fd == clientFd)
-        {
-            _pollFds.erase(_pollFds.begin() + i);
-            break;
-        }
-    }
-    for (int i = 1; i <= _nbClient; i++)
-    {
-        if (_userN[i]->getClientFd() == clientFd)
-        {
-            delete _userN[i];
-            for(int j = i; j < _nbClient - 1; j++)
-                _userN[j] = _userN[j + 1];
-            _nbClient--;
-            break;
-        }
-    }
-}
 
-void    server::readingClient(int clientFd)
-{
-    char buff[BUFSIZ] = {0};
-    _bytesRead = recv(clientFd, buff, BUFSIZ - 1, 0);
-    std::string input = buff;
-    if (_bytesRead == -1)    
-    {
-        initError ex("recv");
-        throw ex;
-    }
-    else if (_bytesRead == 0)
-        closeFd(clientFd);
-    else
-    {
-        buff[_bytesRead] = '\0';
-        std::string input(buff);
-        if (!getUserByFd(clientFd))
-        {
-            sendMessage(clientFd, "Connected !\nIRC", "USER Info Required : USER and NICK (type HELP for usage)");
-            receptInfo(input, clientFd);
-        }
-        else if (getUserByFd(clientFd)->getNick().empty())
-        {
-            sendMessage(clientFd, "IRC", "USER Info required : NICK");
-            receptInfo(input, clientFd);
-        }
-        else
-            manageMsg(clientFd, input);
-    }
-}
-void    server::receptInfo(std::string input, int clientFd)
-{
-    if (input == "HELP")
-        sendMessage(clientFd, "IRC", "USER [username] [hostname(unused)] [servername(unused)] [realname]\n      NICK [nickname]");
-    else
-    {
-        if (!manageUserInfo(clientFd, input))
-            infoRequired(clientFd);
-        else if (getUserByFd(clientFd) != NULL && getUserByFd(clientFd)->getNick().empty())
-            infoRequired(clientFd);
-        else
-        {
-            sendMessage(clientFd, "IRC", "Welcome !");
-            printInfoNewUser(getUserByFd(clientFd));   
-            infoClient(clientFd); 
-        }
-    }
-}
 
 void    server::infoRequired(int clientFd)
 {
     if (!getUserByFd(clientFd))
-        sendMessage(clientFd, "Connected !\nIRC", "USER Info Required : USER and NICK (type HELP for usage)");
+        sendMessage(clientFd, "IRC", "USER Info Required : USER and NICK (type HELP for usage)");
     else if (getUserByFd(clientFd)->getNick().empty())
         sendMessage(clientFd, "IRC", "USER Info required : NICK");
 }
-
-bool    server::manageUserInfo(int clientFd, std::string input)
+std::vector<std::string>    server::parsingIntoVector(std::string input)
 {
+    std::vector<std::string> command;
     input = trim_and_reduce_spaces(input);
     size_t start = 0;
     size_t end = input.find(" ");
-    std::vector<std::string> command;
     while (end != std::string::npos)
     {
         command.push_back(input.substr(start, end - start));
@@ -430,29 +277,49 @@ bool    server::manageUserInfo(int clientFd, std::string input)
         end = input.find(" ", start);
     }
     command.push_back(input.substr(start));
+    return (command);
+}
+bool    server::manageUserInfo(int clientFd, std::string input)
+{
+    std::vector<std::string> command = parsingIntoVector(input);
     if (command.size() != 5 && command.size() != 2)  
         return (false);
     else if (command[0] == "USER")
     {
-        manageUser(clientFd, command);
-        sendMessage(clientFd, "IRC", "USER register"); 
-        return (true);
+        if (manageUser(clientFd, command))
+        {
+            sendMessage(clientFd, "IRC", "USER register"); 
+            return (true);
+        }
+        return (false);
     }
     else if (command[0] == "NICK")
     {
-        manageNick(clientFd, command[1]);
-        sendMessage(clientFd, "IRC", "NICKNAME register"); 
-        return (true);
+        if (manageNick(clientFd, command[1]))
+        {
+            sendMessage(clientFd, "IRC", "NICKNAME register"); 
+            return (true);
+        }
+        return (false);
     }
     else
         return (false);
 }
-void    server::manageUser(int clientFd, std::vector<std::string> command) 
+bool    server::manageUser(int clientFd, std::vector<std::string> command) 
 {
-    user *newUser = new user(*this, clientFd, command);
-    _nbClient++;
-    newUser->setIdx(_nbClient);
-    _userN[_nbClient] = newUser;
+    if (!isValidUsername(command[1]))
+    {
+        sendMessage(_clientFd, "IRC", "Not valid username");
+        return (false);
+    }
+    else
+    {
+        user *newUser = new user(*this, clientFd, command);
+        _nbClient++;
+        newUser->setIdx(_nbClient);
+        _userN[_nbClient] = newUser;
+        return (true);
+    }
 }
 
 user*  server::getUserByFd(int clientFd)
@@ -464,24 +331,36 @@ user*  server::getUserByFd(int clientFd)
     }
     return (NULL);
 }
-
-void    server::manageNick(int clientFd, std::string command)
+bool    server::isValidNickname(std::string nickname)
 {
-    getUserByFd(clientFd)->setNickname(command);
-}
-void    server::handleClient(int clientFd)
-{
-    if (_nbClient >= MAXCLIENT)
+    for (std::vector<std::string>::iterator it = nicknameClient.begin(); it != nicknameClient.end(); it++)
     {
-        std::cerr << "Max client reach" << std::endl;
-        return ;
+        if (*it == nickname)
+            return (false);
     }
-    struct pollfd clientPollFd;
-    clientPollFd.fd = _clientFd;
-    clientPollFd.events = POLLIN;
-    _pollFds.push_back(clientPollFd);
-    _clientFd = clientFd;
-    infoRequired(clientFd);
+    if (!isalpha(nickname[0]) || nickname[0] == '@')
+        return (false);
+    return (true);
+}
+bool        server::manageNick(int clientFd, std::string nickname)
+{
+    if (!isValidNickname(nickname))
+    {
+        sendMessage(_clientFd, "IRC", "Not valid nickname, already use");
+        return (false);
+    }
+    else
+    {
+        getUserByFd(clientFd)->setNickname(nickname);
+        nicknameClient.push_back(nickname);       
+        return (true);
+    }
+}
+bool    server::isValidUsername(std::string username)
+{
+    if (!isalpha(username[0]))
+        return (false);
+    return (true);
 }
 
 void    server::infoClient(int clientFd)
@@ -516,64 +395,6 @@ int     server::findFdClient(std::string user)
             fd = _userN[i]->getClientFd();
     }
     return (fd);
-}
-void    server::run()
-{
-    try
-    {
-        initServer();
-        initSocket();
-        initBind();
-
-        std::cout << "[ SERVER RUN ]" << std::endl;
-        std::cout << "Connection socket to localhost, PORT : " << PORT << std::endl;
-        std::cout << std::endl;
-
-        initListen();
-        initPoll();
-        
-        _addrSize = sizeof(_clienAddr);
-        
-        waitingClient();
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << std::endl;
-    }
-}
-
-
-void    server::waitingClient()
-{
-    std::cout << "Waiting for client connection" << std::endl << std::endl;
-    while (true) 
-    {
-        int pollCount = poll(&_pollFds[0], _pollFds.size(), -1);
-        if (pollCount == -1)
-        {
-            initError ex("poll");
-            throw ex;
-        }
-        for (size_t i = 0; i < _pollFds.size(); i++)
-        {
-            if (_pollFds[i].revents & POLLIN)
-            {
-                if (_pollFds[i].fd == _socketFd)
-                {
-                    _clientFd = accept(_socketFd, (struct sockaddr *)&_clienAddr, &_addrSize);
-                    if (_clientFd == -1)
-                    {
-                        initError ex("accept");
-                        throw ex;
-                    }
-                    std::cout << "New client connected, fd : " << _clientFd << std::endl;
-                    handleClient(_clientFd);
-                }
-                else
-                    readingClient(_pollFds[i].fd);
-            }
-        }
-    }
 }
 
 void    server::delUserList(user * user)
@@ -630,7 +451,121 @@ void    server::updateLoginList(std::string old, std::string login)
         }
     }
 }
+void    server::receptInfo(std::string input, int clientFd)
+{
+    if (input == "HELP")
+        sendMessage(clientFd, "IRC", "USER [username] [hostname(unused)] [servername(unused)] [realname]\n      NICK [nickname]");
+    else
+    {
+        if (!manageUserInfo(clientFd, input))
+            infoRequired(clientFd);
+        else if (getUserByFd(clientFd) != NULL && getUserByFd(clientFd)->getNick().empty())
+            infoRequired(clientFd);
+        else
+        {
+            sendMessage(clientFd, "IRC", "Welcome !");
+            printInfoNewUser(getUserByFd(clientFd));   
+            infoClient(clientFd); 
+        }
+    }
+}
 
+void    server::readingClient(int clientFd)
+{
+    char buff[BUFSIZ] = {0};
+    _bytesRead = recv(clientFd, buff, BUFSIZ - 1, 0);
+    std::string input = buff;
+    if (_bytesRead == -1)    
+    {
+        initError ex("recv");
+        throw ex;
+    }
+    else if (_bytesRead == 0)
+        closeFd(clientFd);
+    else
+    {
+        buff[_bytesRead] = '\0';
+        std::string input(buff);
+        if (!getUserByFd(clientFd))
+            receptInfo(input, clientFd);
+        else if (getUserByFd(clientFd)->getNick().empty())
+            receptInfo(input, clientFd);
+        else
+            manageMsg(clientFd, input);
+    }
+}
+
+void    server::handleClient(int clientFd)
+{
+    if (_nbClient >= MAXCLIENT)
+    {
+        std::cerr << "Max client reach" << std::endl;
+        return ;
+    }
+    struct pollfd clientPollFd;
+    clientPollFd.fd = _clientFd;
+    clientPollFd.events = POLLIN;
+    _pollFds.push_back(clientPollFd);
+    _clientFd = clientFd;
+    infoRequired(clientFd);
+}
+void    server::waitingClient()
+{
+    std::cout << "Waiting for client connection" << std::endl << std::endl;
+    while (true) 
+    {
+        int pollCount = poll(&_pollFds[0], _pollFds.size(), -1);
+        if (pollCount == -1)
+        {
+            initError ex("poll");
+            throw ex;
+        }
+        for (size_t i = 0; i < _pollFds.size(); i++)
+        {
+            if (_pollFds[i].revents & POLLIN)
+            {
+                if (_pollFds[i].fd == _socketFd)
+                {
+                    _clientFd = accept(_socketFd, (struct sockaddr *)&_clienAddr, &_addrSize);
+                    if (_clientFd == -1)
+                    {
+                        initError ex("accept");
+                        throw ex;
+                    }
+                    std::cout << "New client connected, fd : " << _clientFd << std::endl;
+                    handleClient(_clientFd);
+                }
+                else
+                    readingClient(_pollFds[i].fd);
+            }
+        }
+    }
+}
+
+void    server::run()
+{
+    try
+    {
+        initServer();
+        initSocket();
+        initBind();
+
+        std::cout << "[ SERVER RUN ]" << std::endl;
+        std::cout << "Connection socket to localhost, PORT : " << PORT << std::endl;
+        std::cout << std::endl;
+
+        initListen();
+        initPoll();
+        
+        _addrSize = sizeof(_clienAddr);
+        
+        waitingClient();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+}
 
 void    server::printLoginList()
 {
@@ -656,6 +591,34 @@ void   server::printInfoUsers()
         std::cout << "Socket client : " << _userN[i]->getClientFd() << std::endl
             << "Login client : "  << _userN[i]->getUsername() << std::endl 
             << "Nickname client : " << _userN[i]->getNick() << std::endl << std::endl;
+    }
+}
+void    server::printCmd()
+{
+    for (std::vector<std::string>::iterator it = _command.begin(); it != _command.end(); it++)
+        std::cout << *it << std::endl;
+}
+void    server::printChannelInfo()
+{
+    if (_nbChannel == 0)
+        std::cout << "Actually no channel !" << std::endl;
+    else
+    {
+        std::cout << "each channel info : " << std::endl;
+        for (int i = 1; i <= _nbChannel; i++)
+        {
+            std::cout << "Channel name : " << channelId[i]->getName() << std::endl;
+            std::cout << "Channel nb user : " << channelId[i]->getNbUser() << std::endl;
+            for (int j = 1; j <= channelId[i]->getNbUser(); j++)
+            {  
+                std::cout << "-----------" << std::endl;
+                std::string name = channelId[i]->getUserN(j)->getNick();
+                int idx = channelId[i]->getIdxUserByName(name);
+                std::cout << "name user in channel : " << name << std::endl;
+                std::cout << "idx user in channel : " << idx << std::endl;
+                std::cout << "-----------" << std::endl;
+            }
+        }
     }
 }
 
@@ -692,3 +655,9 @@ void    server::setNbChannel(int i)
     _nbChannel += i;
 }
 
+server::initError::initError(const std::string& error)
+{
+    std::strncpy(_error, "Error on : ", 99);
+    std::strncat(_error, error.c_str(), 99 - std::strlen(_error));
+    _error[99] = '\0';
+}

@@ -18,7 +18,7 @@ user::user(server& srv, int clientFd, std::vector<std::string> command) : _serve
     std::cout << "User construct" << std::endl;
     try
     {
-        if (!isValidName(command[1]))
+        if (!isValidUsername(command[1]))
             _server.sendMessage(clientFd, "IRC", "Not a valid username");
         _username = command[1];
         _realName = command[4];
@@ -37,16 +37,21 @@ user::~user()
     _server.delUserList(this);
     std::cout << this->_username << " has quit the server" << std::endl;
 }
-
-
-bool    user::isValidName(std::string name)
+bool    user::isValidUsername(std::string username)
 {
-    for (std::vector<std::string>::iterator it = _server.getLogin().begin(); it != _server.getLogin().end(); it++)
+    if (!isalpha(username[0]))
+        return (false);
+    return (true);
+}
+
+bool    user::isValidNickname(std::string nickname)
+{
+    for (std::vector<std::string>::iterator it = _server.nicknameClient.begin(); it != _server.nicknameClient.end(); it++)
     {
-        if (*it == name)
+        if (*it == nickname)
             return (false);
     }
-    if (!isalpha(name[0]))
+    if (!isalpha(nickname[0]) || nickname[0] == '@')
         return (false);
     return (true);
 }
@@ -118,7 +123,7 @@ void    user::nick()
     }
     try
     {
-        if (!isValidName(_server.getCommand()[1]))
+        if (!isValidNickname(_server.getCommand()[1]))
         {
             _server.sendMessage(_clientFd, "IRC", "Not valid nickname");
             throw NotValidNickName();
@@ -126,7 +131,10 @@ void    user::nick()
         std::string oldNick = _nickname;
         std::string newNick = _server.getCommand()[1];
         std::string msg = "Your nickname was : " + oldNick + " its now : " + newNick;
-        _nickname = newNick;
+        if (_nickname[0] == '@')
+            _nickname = "@" + newNick;
+        else
+            _nickname = newNick;
         _server.sendMessage(this->_clientFd, "", msg);
         std::cout << _username << " has changed his nickname to : " << _nickname << std::endl;
     }
@@ -146,7 +154,7 @@ void   user::userName()
     }
     try
     {
-        if (!isValidName(_server.getCommand()[1]))
+        if (!isValidUsername(_server.getCommand()[1]))
         {
             _server.sendMessage(_clientFd, "IRC", "Not valid username");
             throw NotValidUserName();
@@ -257,7 +265,6 @@ void    user::kick()
 
 int    user::checkChannel()
 {
-    
     for (int i = 1; i <= _server.getNbChannel(); i++)
     {
         if (_server.getCommand()[1] == _server.channelId[i]->getName())
@@ -331,7 +338,12 @@ void    user::join()
 bool    user::isValidChannelName(std::string name)
 {
     if (name[0] == '&' || name[0] == '#')
+    {
+        for (size_t i = 0; i < name.size(); i++)
+            if(!isprint(name[i]))
+                return (false);
         return (true);
+    }
     return (false);
 }
 
@@ -342,7 +354,7 @@ void    user::msg()
         _server.sendMessage(_clientFd, "", "Invalid Format. Usage : /msg [nickname] [msg]");
         return ;
     }
-    if (!checkUserList())
+    if (!checkNicknameList())
         _server.sendMessage(_clientFd, "", "The username is not valid !");
     else
     {
@@ -397,9 +409,9 @@ void    user::list()
     }
     _server.sendMessage(_clientFd, "", msg);
 }
-bool    user::checkUserList()
+bool    user::checkNicknameList()
 {
-    std::vector<std::string> tmp = _server.getLogin();
+    std::vector<std::string> tmp = _server.nicknameClient;
     if (tmp.size() == 1)
         return (false);
     else
@@ -412,6 +424,15 @@ bool    user::checkUserList()
     }   
     return (false);
     
+}
+channel*     user::getChannelByName(std::string name)
+{
+    for (int i = 1; i <= _server.getNbChannel(); i++)
+    {
+        if (_server.channelId[i]->getName() == name)
+            return (channelUser[i]);
+    }
+    return (NULL);
 }
 int             user::getClientFd(void)
 {
@@ -455,15 +476,6 @@ channel*    user::getChannelByIdx(int idx)
     return (channelUser[idx]);
 }
 
-channel*     user::getChannelByName(std::string name)
-{
-    for (int i = 1; i <= _server.getNbChannel(); i++)
-    {
-        if (_server.channelId[i]->getName() == name)
-            return (channelUser[i]);
-    }
-    return (NULL);
-}
 void    user::setNickname(std::string nickname)
 {
     _nickname = nickname;

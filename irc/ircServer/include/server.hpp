@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/08 17:35:00 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/09 12:22:48 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,7 @@ class server
         ~server();
 
         channel*                    channelId[MAXCHANNEL];
+        std::vector<std::string>    nicknameClient;
 
         void    run(void);
         void    initServer(void);
@@ -64,8 +65,11 @@ class server
         void    waitingClient(void);
         void    readingClient(int clientFd);
         bool    manageUserInfo(int clientFd, std::string input);
-        void    manageUser(int clientFd, std::vector<std::string> command);
-        void    manageNick(int clientFd, std::string command);
+        bool    manageUser(int clientFd, std::vector<std::string> command);
+        bool    manageNick(int clientFd, std::string nickname);
+
+        bool    isValidUsername(std::string username);
+        bool    isValidNickname(std::string nickname);
         void    infoRequired(int clientFd);
         void    handleClient(int clientFd);
         void    infoClient(int clientFd);
@@ -95,7 +99,7 @@ class server
         void    printInfoNewUser(user *user);
         void    printInfoUsers(void);
 
-
+        std::vector<std::string>    parsingIntoVector(std::string input);
 
         void                        checkChannel(std::string currChannel);        
         void                        printChannelInfo(void);
@@ -111,7 +115,7 @@ class server
         void                        setLogin(std::string login);
         void                        setNbChannel(int nb);
 
-        std::string                 loginClient[MAXCLIENT];
+
         
         class initError : public std::exception
         {

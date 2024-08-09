@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/08 17:38:07 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/09 11:15:02 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,9 +39,10 @@ class user
 
 
 
-                bool            isValidName(std::string name);
+                bool            isValidNickname(std::string nickname);
+                bool            isValidUsername(std::string username);
                 bool            isValidChannelName(std::string name);
-                bool            checkUserList(void);
+                bool            checkNicknameList(void);
                 int             checkChannel(void);
                 bool            checkUser(void);
                 bool            checkKickInfo(void);
