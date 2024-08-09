@@ -24,10 +24,7 @@ server::~server()
     std::cout << "Server destructor" << std::endl;
 }
 
-const char* server::initError::what() const throw()
-{
-    return (_error);
-}
+
 
 void    server::initServer()
 {
@@ -123,87 +120,6 @@ void    server::quit(user * user)
         }
 }
 
-void   server::onlyOne(user * user, std::string input)
-{
-    if (input == "/quit")
-        quit(user);
-    if (input == "channel")
-        printChannelInfo();
-    if (input == "user")
-        user->checkUserChannelList();
-    if(input == "alluser")
-        printInfoUsers();
-    int i = 0;
-    std::string call[5] = {"/info", "/help", "/who", "/list", "/leave"};
-    void (user::*ptr[5])() = {&user::info, &user::help, &user::who, &user::list, &user::leave};
-    while (i < 5 && input != call[i])
-        i++;
-    if (i < 5)
-        (user->*ptr[i])();
-    else
-        msgToCurrent(user, input);
-}
-
-
-void    server::manageInput(user * user, std::string input)
-{
-    parsingCommand(input);
-    int i = 0;
-    std::string call[6] = {"/nick", "/user", "/join", "/msg", "KICK", "INVITE"};
-    void (user::*ptr[6])() = {&user::nick, &user::userName, &user::join, &user::msg, &user::kick, &user::invite};
-    while (i < 6 && _command[0] != call[i])
-        i++;
-    if (i < 6)
-        (user->*ptr[i])();
-    else
-        msgToCurrent(user, input);
-}
-void    server::parsingCommand(std::string input)
-{
-    input = trim_and_reduce_spaces(input);
-    size_t start = 0;
-    size_t end = input.find(" ");
-    _command.clear();
-    while (end != std::string::npos)
-    {
-        _command.push_back(input.substr(start, end - start));
-        start = end + 1;
-        end = input.find(" ", start);
-    }
-    _command.push_back(input.substr(start));
-}
-
-void    server::msgToCurrent(user * user, std::string input)
-{
-    if (!user->getInChannel())
-        sendMessage(user->getClientFd(), "IRC", "Currently you aren't in any channel !");
-    else
-    {
-        std::string channelName = user->getCurrChannel();
-        channel *curr = user->getChannelByName(channelName);
-        findUser(curr, user, input);
-    }
-}
-void    server::findUser(channel * channel, user * user, std::string input)
-{
-    if (channel->getNbUser() == 1)
-        sendMessage(user->getClientFd(), "", "You re alone in this channel");
-    else
-    {
-        int i = 1;
-        while (i <= channel->getNbUser())
-        {
-            if (channel->getUserN(i) == user)
-                i++;
-            else
-            {
-                std::string from = user->getNick();
-                sendMessage(channel->getUserN(i)->getClientFd(), from, input);
-                i++;
-            }
-        }
-    }
-}
 void    server::sendMessage(int clientFd, std::string from, std::string message)
 {
     std::string userMsg;
@@ -227,7 +143,112 @@ void    server::sendMessage(int clientFd, std::string from, std::string message)
         << ", bytes send = " << bytesSend << std::endl;
     }
 }
+void    server::manageInput(user * user, std::string input)
+{
+    parsingCommand(input);
+    int i = 0;
+    std::string call[6] = {"/nick", "/user", "/join", "/msg", "KICK", "INVITE"};
+    void (user::*ptr[6])() = {&user::nick, &user::userName, &user::join, &user::msg, &user::kick, &user::invite};
+    while (i < 6 && _command[0] != call[i])
+        i++;
+    if (i < 6)
+        (user->*ptr[i])();
+    else
+        msgToCurrent(user, input);
+}
 
+void   server::onlyOne(user * user, std::string input)
+{
+    if (input == "/quit")
+        quit(user);
+    if (input == "channel")
+        printChannelInfo();
+    if (input == "user")
+        user->checkUserChannelList();
+    if(input == "alluser")
+        printInfoUsers();
+    int i = 0;
+    std::string call[5] = {"/info", "/help", "/who", "/list", "/leave"};
+    void (user::*ptr[5])() = {&user::info, &user::help, &user::who, &user::list, &user::leave};
+    while (i < 5 && input != call[i])
+        i++;
+    if (i < 5)
+        (user->*ptr[i])();
+    else
+        msgToCurrent(user, input);
+}
+void    server::msgToCurrent(user * user, std::string input)
+{
+    if (!user->getInChannel())
+        sendMessage(user->getClientFd(), "IRC", "Currently you aren't in any channel !");
+    else
+    {
+        std::string channelName = user->getCurrChannel();
+        channel *curr = user->getChannelByName(channelName);
+        sendInputToChanFromUser(curr, user, input);
+    }
+}
+
+void    server::sendInputToChanFromUser(channel * channel, user * user, std::string input)
+{
+    if (channel->getNbUser() == 1)
+        sendMessage(user->getClientFd(), "", "You re alone in this channel");
+    else
+    {
+        int i = 1;
+        while (i <= channel->getNbUser())
+        {
+            if (channel->getUserN(i) == user)
+                i++;
+            else
+            {
+                std::string from = user->getNick();
+                sendMessage(channel->getUserN(i)->getClientFd(), from, input);
+                i++;
+            }
+        }
+    }
+}
+
+void    server::parsingMsg(user * user, std::string input)
+{
+    size_t sepa = 0;
+    sepa = input.find(" ");
+    if (sepa != std::string::npos)
+        manageInput(user, input);
+    else
+        onlyOne(user, input);
+}
+
+void    server::parsingCommand(std::string input)
+{
+    input = trim_and_reduce_spaces(input);
+    size_t start = 0;
+    size_t end = input.find(" ");
+    _command.clear();
+    while (end != std::string::npos)
+    {
+        _command.push_back(input.substr(start, end - start));
+        start = end + 1;
+        end = input.find(" ", start);
+    }
+    _command.push_back(input.substr(start));
+}
+std::vector<std::string>    server::parsingIntoVector(std::string input)
+{
+    std::vector<std::string> command;
+    input = trim_and_reduce_spaces(input);
+    size_t start = 0;
+    size_t end = input.find(" ");
+    while (end != std::string::npos)
+    {
+        command.push_back(input.substr(start, end - start));
+        start = end + 1;
+        end = input.find(" ", start);
+    }
+    command.push_back(input.substr(start));
+    return (command);
+}
 void    server::manageMsg(int clientFd, std::string input)
 {
     user* currUser = NULL;
@@ -248,39 +269,6 @@ void    server::manageMsg(int clientFd, std::string input)
     else
         std::cout << "curr User is null !!!!" << std::endl;
 }
-void    server::parsingMsg(user * user, std::string input)
-{
-    size_t sepa = 0;
-    sepa = input.find(" ");
-    if (sepa != std::string::npos)
-        manageInput(user, input);
-    else
-        onlyOne(user, input);
-}
-
-
-void    server::infoRequired(int clientFd)
-{
-    if (!getUserByFd(clientFd))
-        sendMessage(clientFd, "IRC", "USER Info Required : USER and NICK (type HELP for usage)");
-    else if (getUserByFd(clientFd)->getNick().empty())
-        sendMessage(clientFd, "IRC", "USER Info required : NICK");
-}
-std::vector<std::string>    server::parsingIntoVector(std::string input)
-{
-    std::vector<std::string> command;
-    input = trim_and_reduce_spaces(input);
-    size_t start = 0;
-    size_t end = input.find(" ");
-    while (end != std::string::npos)
-    {
-        command.push_back(input.substr(start, end - start));
-        start = end + 1;
-        end = input.find(" ", start);
-    }
-    command.push_back(input.substr(start));
-    return (command);
-}
 bool    server::manageUserInfo(int clientFd, std::string input)
 {
     std::vector<std::string> command = parsingIntoVector(input);
@@ -299,7 +287,7 @@ bool    server::manageUserInfo(int clientFd, std::string input)
     {
         if (manageNick(clientFd, command[1]))
         {
-            sendMessage(clientFd, "IRC", "NICKNAME register"); 
+            sendMessage(clientFd, "IRC", "NICKNAME register\n"); 
             return (true);
         }
         return (false);
@@ -307,6 +295,7 @@ bool    server::manageUserInfo(int clientFd, std::string input)
     else
         return (false);
 }
+
 bool    server::manageUser(int clientFd, std::vector<std::string> command) 
 {
     if (!isValidUsername(command[1]))
@@ -324,31 +313,11 @@ bool    server::manageUser(int clientFd, std::vector<std::string> command)
     }
 }
 
-user*  server::getUserByFd(int clientFd)
-{
-    for (int i = 1; i <= _nbClient; i++)
-    {
-        if (_userN[i]->getClientFd() == clientFd)
-            return (_userN[i]);
-    }
-    return (NULL);
-}
-bool    server::isValidNickname(std::string nickname)
-{
-    for (std::vector<std::string>::iterator it = nicknameClient.begin(); it != nicknameClient.end(); it++)
-    {
-        if (*it == nickname)
-            return (false);
-    }
-    if (!isalpha(nickname[0]) || nickname[0] == '@')
-        return (false);
-    return (true);
-}
 bool        server::manageNick(int clientFd, std::string nickname)
 {
     if (!isValidNickname(nickname))
     {
-        sendMessage(_clientFd, "IRC", "Not valid nickname, already use");
+        sendMessage(_clientFd, "IRC", "Not valid nickname, already use\n");
         return (false);
     }
     else
@@ -358,12 +327,7 @@ bool        server::manageNick(int clientFd, std::string nickname)
         return (true);
     }
 }
-bool    server::isValidUsername(std::string username)
-{
-    if (!isalpha(username[0]))
-        return (false);
-    return (true);
-}
+
 
 void    server::infoClient(int clientFd)
 {
@@ -388,71 +352,8 @@ void    server::infoClient(int clientFd)
     }
 }
 
-int     server::findFdClient(std::string user)
-{
-   int fd;
-    for (int i = 1; i <= _nbClient; i++)
-    {
-        if (_userN[i]->getNick() == user)
-            fd = _userN[i]->getClientFd();
-    }
-    return (fd);
-}
-
-void    server::delUserList(user * user)
-{
-    if (_loginClient.size() == 1)
-        _loginClient.pop_back();
-    else
-    {
-        for (std::vector<std::string>::iterator it = _loginClient.begin(); it != _loginClient.end(); it++)
-        {
-            if (*it == user->getUsername())
-            {
-                _loginClient.erase(it);
-                break;
-            }
-        }
-    }
-}
 
 
-void   server::checkChannel(std::string currChannel)
-{
-    if (_nbChannel > 0)
-    {
-        for (int i = 1; i <= _nbChannel; i++)
-        {
-            if (channelId[i]->getName() == currChannel)
-            {
-                if (channelId[i]->getNbUser() == 0)
-                {
-                    channelId[i]->~channel();
-                    delete channelId[i];
-                    _nbChannel--;
-                }
-            }
-        }
-    }
-}
-
-void    server::updateLoginList(std::string old, std::string login)
-{
-    if (_loginClient.size() == 1)
-        _loginClient[0] = login;
-    else
-    {
-        for (std::vector<std::string>::iterator it = _loginClient.begin(); it != _loginClient.end(); it++)
-        {
-            if (*it == old)
-            {
-                _loginClient.erase(it);
-                _loginClient.push_back(login);
-                break;
-            }
-        }
-    }
-}
 void    server::receptInfo(std::string input, int clientFd)
 {
     if (input == "HELP")
@@ -471,6 +372,14 @@ void    server::receptInfo(std::string input, int clientFd)
             infoClient(clientFd); 
         }
     }
+}
+
+void    server::infoRequired(int clientFd)
+{
+    if (!getUserByFd(clientFd))
+        sendMessage(clientFd, "IRC", "Info Required : USER and NICK (type HELP for usage)");
+    else if (getUserByFd(clientFd)->getNick().empty())
+        sendMessage(clientFd, "IRC", "Info required : NICK");
 }
 
 void    server::readingClient(int clientFd)
@@ -570,6 +479,175 @@ void    server::run()
     }
 }
 
+void    server::delUserList(user * user)
+{
+    if (_loginClient.size() == 1)
+        _loginClient.pop_back();
+    else
+    {
+        for (std::vector<std::string>::iterator it = _loginClient.begin(); it != _loginClient.end(); it++)
+        {
+            if (*it == user->getUsername())
+            {
+                _loginClient.erase(it);
+                break;
+            }
+        }
+    }
+    if (nicknameClient.size() == 1)
+        nicknameClient.pop_back();
+    else
+    {
+        for (std::vector<std::string>::iterator it = nicknameClient.begin(); it != nicknameClient.end(); it++)
+        {
+            if (*it == user->getNick())
+            {
+                nicknameClient.erase(it);
+                break;
+            }
+        }
+    }
+}
+
+
+void    server::updateNicknameList(std::string old, std::string nickname)
+{
+    if (nicknameClient .size() == 1)
+        nicknameClient[0] = nickname;
+    else
+    {
+        for (std::vector<std::string>::iterator it = nicknameClient.begin(); it != nicknameClient.end(); it++)
+        {
+            if (*it == old)
+            {
+                nicknameClient.erase(it);
+                nicknameClient.push_back(nickname);
+                break;
+            }
+        }
+    }
+}
+void    server::updateLoginList(std::string old, std::string login)
+{
+    if (_loginClient.size() == 1)
+        _loginClient[0] = login;
+    else
+    {
+        for (std::vector<std::string>::iterator it = _loginClient.begin(); it != _loginClient.end(); it++)
+        {
+            if (*it == old)
+            {
+                _loginClient.erase(it);
+                _loginClient.push_back(login);
+                break;
+            }
+        }
+    }
+}
+void   server::checkChannel(std::string currChannel)
+{
+    if (_nbChannel > 0)
+    {
+        for (int i = 1; i <= _nbChannel; i++)
+        {
+            if (channelId[i]->getName() == currChannel)
+            {
+                if (channelId[i]->getNbUser() == 0)
+                {
+                    channelId[i]->~channel();
+                    delete channelId[i];
+                    _nbChannel--;
+                }
+            }
+        }
+    }
+}
+
+bool    server::isValidNickname(std::string nickname)
+{
+    for (std::vector<std::string>::iterator it = nicknameClient.begin(); it != nicknameClient.end(); it++)
+    {
+        if (*it == nickname)
+            return (false);
+    }
+    if (!isalpha(nickname[0]) || nickname[0] == '@')
+        return (false);
+    return (true);
+}
+bool    server::isValidUsername(std::string username)
+{
+    if (!isalpha(username[0]))
+        return (false);
+    return (true);
+}
+int     server::getFdClientByNick(std::string nickname)
+{
+   int fd;
+    for (int i = 1; i <= _nbClient; i++)
+    {
+        if (_userN[i]->getNick() == nickname)
+            fd = _userN[i]->getClientFd();
+    }
+    return (fd);
+}
+
+user*  server::getUserByFd(int clientFd)
+{
+    for (int i = 1; i <= _nbClient; i++)
+    {
+        if (_userN[i]->getClientFd() == clientFd)
+            return (_userN[i]);
+    }
+    return (NULL);
+}
+
+user*   server::getUserByNickname(std::string nickname)
+{
+    std::vector<std::string> list = nicknameClient;
+    int i = 1;
+    for (std::vector<std::string>::iterator it = list.begin(); it != list.end(); it++)
+    {
+        if (nickname == *it)
+        {
+            return (_userN[i]);
+        }
+        i++;
+    }
+    return (NULL);
+}
+
+int     server::getNbClient(void)
+{
+    return (_nbClient);
+}
+int     server::getNbChannel(void)
+{
+    return (_nbChannel);
+}
+std::vector<std::string>   server::getCommand(void)
+{
+    return (_command);
+}
+
+std::vector<std::string>  server::getLogin()
+{
+    return (_loginClient);
+}
+
+void    server::setLogin(std::string login)
+{
+    _loginClient.push_back(login);
+}
+
+int     server::getSocketfd()
+{
+    return (_socketFd);
+}
+
+void    server::setNbChannel(int i)
+{
+    _nbChannel += i;
+}
 void    server::printLoginList()
 {
     std::vector<std::string> tmp = _loginClient;
@@ -625,56 +703,14 @@ void    server::printChannelInfo()
         }
     }
 }
-user*   server::getUserByNickname(std::string nickname)
-{
-    std::vector<std::string> list = nicknameClient;
-    int i = 1;
-    for (std::vector<std::string>::iterator it = list.begin(); it != list.end(); it++)
-    {
-        if (nickname == *it)
-        {
-            return (_userN[i]);
-        }
-        i++;
-    }
-    return (NULL);
-}
-int     server::getNbClient(void)
-{
-    return (_nbClient);
-}
-int     server::getNbChannel(void)
-{
-    return (_nbChannel);
-}
-std::vector<std::string>   server::getCommand(void)
-{
-    return (_command);
-}
-
-std::vector<std::string>  server::getLogin()
-{
-    return (_loginClient);
-}
-
-void    server::setLogin(std::string login)
-{
-    _loginClient.push_back(login);
-}
-
-int     server::getSocketfd()
-{
-    return (_socketFd);
-}
-
-void    server::setNbChannel(int i)
-{
-    _nbChannel += i;
-}
-
 server::initError::initError(const std::string& error)
 {
     std::strncpy(_error, "Error on : ", 99);
     std::strncat(_error, error.c_str(), 99 - std::strlen(_error));
     _error[99] = '\0';
+}
+
+const char* server::initError::what() const throw()
+{
+    return (_error);
 }

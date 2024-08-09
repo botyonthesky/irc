@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/09 13:30:28 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/09 16:36:09 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,11 +85,13 @@ class server
         void    msgToCurrent(user * user, std::string input);
        
         void    updateLoginList(std::string old, std::string login);
+        void    updateNicknameList(std::string old, std::string nickname);
+
         void    printLoginList(void);
         void    delUserList(user * user);
         void    removeUser(int clientFd);
-        void    findUser(channel * channel, user * user, std::string input);
-        int     findFdClient(std::string user);
+        void    sendInputToChanFromUser(channel * channel, user * user, std::string input);
+        int     getFdClientByNick(std::string nickname);
         
         void    quit(user *user);
 
