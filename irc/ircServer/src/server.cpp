@@ -680,8 +680,10 @@ void    server::printCmd()
     for (std::vector<std::string>::iterator it = _command.begin(); it != _command.end(); it++)
         std::cout << *it << std::endl;
 }
-void    server::printChannelInfo()
+void    server::printChannelInfoByChannel(std::string channelName)
 {
+    std::cout << "printf channel info userN" << std::endl;
+    
     if (_nbChannel == 0)
         std::cout << "Actually no channel !" << std::endl;
     else
@@ -695,7 +697,32 @@ void    server::printChannelInfo()
             {  
                 std::cout << "-----------" << std::endl;
                 std::string name = channelId[i]->getUserN(j)->getNick();
-                int idx = channelId[i]->getIdxUserByName(name);
+                int idx = channelId[i]->getIdxUserByNickname(name);
+                std::cout << "name user in channel : " << name << std::endl;
+                std::cout << "idx user in channel : " << idx << std::endl;
+                std::cout << "-----------" << std::endl;
+            }
+        }
+    }
+    (void)channelName;
+}
+void    server::printChannelInfo()
+{
+    std::cout << "printf channel info channelId" << std::endl;
+    if (_nbChannel == 0)
+        std::cout << "Actually no channel !" << std::endl;
+    else
+    {
+        std::cout << "each channel info : " << std::endl;
+        for (int i = 1; i <= _nbChannel; i++)
+        {
+            std::cout << "Channel name : " << channelId[i]->getName() << std::endl;
+            std::cout << "Channel nb user : " << channelId[i]->getNbUser() << std::endl;
+            for (int j = 1; j <= channelId[i]->getNbUser(); j++)
+            {  
+                std::cout << "-----------" << std::endl;
+                std::string name = channelId[i]->getUserN(j)->getNick();
+                int idx = channelId[i]->getIdxUserByNickname(name);
                 std::cout << "name user in channel : " << name << std::endl;
                 std::cout << "idx user in channel : " << idx << std::endl;
                 std::cout << "-----------" << std::endl;

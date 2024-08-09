@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:16:40 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/08 14:06:39 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/09 19:05:46 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,12 +42,14 @@ class channel
         int             getIdxUser(void);
         int             getNbUser(void);
         user*           getUserN(int idx);
-        int             getIdxUserByName(std::string name);
+        int             getIdxUserByNickname(std::string name);
+        std::string     getNameOperator(void);
 
         void            setIdxUser(int idx);
         void            setIdx(int idx);
         void            setNbUser(int x);
         void            setUserN(user * user, int idx);
+        void            setNameOperator(std::string name);
         void            delUserN(int idx);
         
 

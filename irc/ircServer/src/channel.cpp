@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:18:47 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/08 16:49:06 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/09 19:07:48 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,8 +20,10 @@ channel::channel(user * user, std::string name) : _nbUsers(0)
         _nbUsers++;
         _idxUser = _nbUsers;
         _userN[_idxUser] = user;
-        user->setNickname("@" + user->getNick());
         _nameOperator = user->getNick();
+        if(user->getNick()[0] != '@')
+            user->setNickname("@" + user->getNick());
+
     }
     catch(const std::exception& e)
     {
@@ -88,11 +90,12 @@ void        channel::delUserN(int idx)
     }
 }
 
-int     channel::getIdxUserByName(std::string name)
+int     channel::getIdxUserByNickname(std::string nickname)
 {
     for (int i = 1; i <= getNbUser(); i++)
     {
-        if (_userN[i]->getNick() == name)
+        // std::cout << "nb user : " << getNbUser() << " i = " << i << std::endl;
+        if (_userN[i]->getNick() == nickname)
             return (i);
     }
     return (-1);
@@ -112,6 +115,9 @@ void    channel::majIdxUserChannel()
     }
         
 }
-
+std::string    channel::getNameOperator()
+{
+    return (_nameOperator);
+}
 
 

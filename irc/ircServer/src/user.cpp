@@ -149,6 +149,8 @@ void    user::join()
             _server.sendMessage(_clientFd, "IRC" , "Not valid Channel name\nUsage : ('#' | '&') <chstring>");
             throw NotValidChannelName();
         }
+        if (_currChannel != "No channel")
+            leave();
         if (checkChannel() == -1)
             createNewChannel(name);
         else
@@ -170,9 +172,10 @@ void    user::leave()
     else
     {
         channel * curr = getChannelByName(_currChannel);
-        int idx = curr->getIdxUserByName(this->_username);
+        int idx = curr->getIdxUserByNickname(this->_nickname);
         curr->delUserN(idx);
-        setNickname(_nickname.erase(0, 1));
+        if (_nickname[0] == '@')
+            setNickname(_nickname.erase(0, 1));
         _inChannel = false;
         std::string msg = "You left the channel : " + _currChannel;
         _server.sendMessage(_clientFd, "" , msg);
@@ -256,7 +259,7 @@ void    user::kick()
         std::string nameK = _server.getCommand()[1];
         user * toKick = findUserChannelByName(nameK);
         channel * curr = getChannelByName(_currChannel);
-        int idx = curr->getIdxUserByName(nameK);
+        int idx = curr->getIdxUserByNickname(nameK);
         curr->delUserN(idx);
         toKick->_currChannel = "No channel";
         toKick->_inChannel = false;
@@ -317,6 +320,9 @@ void    user::joinChannel(std::string name)
     channel * curr = getChannelByName(name);
     int idx = _server.channelId[checkChannel()]->getNbUser();
     curr->setUserN(this, idx);
+    if (curr->getNameOperator() == _nickname)
+        _nickname = "@" + _nickname;
+
 }
 
 int    user::checkChannel()

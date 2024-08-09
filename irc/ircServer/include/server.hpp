@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/09 16:36:09 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/09 18:09:17 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,6 +105,8 @@ class server
 
         void                        checkChannel(std::string currChannel);        
         void                        printChannelInfo(void);
+        void                        printChannelInfoByChannel(std::string channelName);
+
         // void                        decremChannelNbUser(std::string currChannel);
         void                        getNbUserInChannel(std::string currChannel);
         user*                       getUserByNickname(std::string nickname);
