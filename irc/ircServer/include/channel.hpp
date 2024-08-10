@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:16:40 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/09 19:05:46 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/10 12:13:30 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,15 +26,16 @@ class channel
         int                 _idxUser;
         int                 _nbUsers;
         user*               _userN[MAXCLIENT];
-        std::string         _nameOperator; 
+        std::string         _nameOperator;
 
     public:
-    
-    
+        
         channel(user * user, std::string name);
         ~channel();
 
-        // int             getIdxByUserName(std::string name);
+
+        std::string     topic;
+
         bool            isValidChannelName(std::string name);
         void            majIdxUserChannel(void);
         std::string     getName(void);
@@ -51,8 +52,6 @@ class channel
         void            setUserN(user * user, int idx);
         void            setNameOperator(std::string name);
         void            delUserN(int idx);
-        
-
         
 };
 

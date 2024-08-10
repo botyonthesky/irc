@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:18:47 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/09 19:07:48 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/10 12:14:34 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ channel::channel(user * user, std::string name) : _nbUsers(0)
         _nameOperator = user->getNick();
         if(user->getNick()[0] != '@')
             user->setNickname("@" + user->getNick());
+        topic = "";
 
     }
     catch(const std::exception& e)

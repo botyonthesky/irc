@@ -14,6 +14,7 @@
 
 server::server() : _nbClient(0), _nbChannel(0)
 {
+    
 }
 
 server::~server()
@@ -23,8 +24,6 @@ server::~server()
         close(_pollFds[i].fd);
     std::cout << "Server destructor" << std::endl;
 }
-
-
 
 void    server::initServer()
 {
@@ -554,6 +553,7 @@ void   server::checkChannel(std::string currChannel)
             {
                 if (channelId[i]->getNbUser() == 0)
                 {
+                    std::cout << "Channel : " << currChannel << " have been delete." << std::endl;
                     channelId[i]->~channel();
                     delete channelId[i];
                     _nbChannel--;
@@ -582,11 +582,24 @@ bool    server::isValidUsername(std::string username)
 }
 int     server::getFdClientByNick(std::string nickname)
 {
-   int fd;
+    
+    int fd;
     for (int i = 1; i <= _nbClient; i++)
     {
+        if (_userN[i]->getNick()[0] == '@')
+        {
+            std::string majnick = _userN[i]->getNick().erase(0, 1);
+            if (majnick == nickname)
+            {
+                fd = _userN[i]->getClientFd();
+                break ;
+            }
+        }
         if (_userN[i]->getNick() == nickname)
+        {
             fd = _userN[i]->getClientFd();
+            break ;
+        }
     }
     return (fd);
 }

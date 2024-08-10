@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "../include/main.hpp"
-#include "../include/server.hpp"
 
 user::user(server& srv, int clientFd, std::vector<std::string> command) : _server(srv), _clientFd(clientFd), _inChannel(false)
 {
@@ -225,7 +224,9 @@ void    user::msg()
         _server.sendMessage(_clientFd, "", "The username is not valid !");
     else
     {
+        std::cout << "else : " << std::endl; 
         int fdToSend = _server.getFdClientByNick(_server.getCommand()[1]);
+        std::cout << "fd to send  : " << fdToSend << std::endl;
         _server.sendMessage(fdToSend, this->getNick(), _server.getCommand()[2]);
     }
 }
@@ -380,7 +381,10 @@ bool    user::checkNicknameList(std::string nickname)
         for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); it++)
         {
             if (nickname == *it)
+            {
+                std::cout << "find nick name !" << std::endl;
                 return (true);
+            }
         }
     }   
     return (false);
